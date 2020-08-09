@@ -23,7 +23,7 @@ classdef SimpleDrivetrain < handle
         
         % Returns shaft rotational acceleration for both engine and
         % clutch/gearbox.
-        function get_shaft_acc(obj, w_diff, w_engine, M_diff, J_diff) % takes as input speeds of differential and of engine, and torque applied to the differential
+        function [w1_engine, w1_diff] = get_shaft_acc(obj, w_diff, w_engine, M_diff, J_diff) % takes as input speeds of differential and of engine, and torque applied to the differential
             % First, determine whether clutch is engaged
             w_gear = w_diff * obj.differential.final_drive;
             curr_gear = obj.controls.gear_lever;
@@ -32,7 +32,7 @@ classdef SimpleDrivetrain < handle
             obj.clutch.update_coupled_state(obj.controls.clc_pedal, w_engine, w_clutch);
             clutch_engaged = obj.clutch.is_coupled;
             M_clutch = (M_diff / obj.differential.final_drive / curr_gear_ratio) * obj.gearbox.get_efficiency(curr_gear);
-            M_engine = obj.engine.get_max_torque(obj.controls.gas_pedal, rads2rpm(w_engine)); % TODO: Change this when a more sophisticated engine is available.
+            M_engine = obj.engine.get_torque(obj.controls.gas_pedal, rads2rpm(w_engine)); 
             if clutch_engaged % one balance
                 J_tot = J_diff + obj.engine.Jm; % total moment of inertia
                 w1_engine = (M_engine + M_clutch) / J_tot; % engine acceleration. CHECK SIGNS.

@@ -19,6 +19,9 @@ f = Clutch;
 c = Gearbox([-15.0 10.0 8.0 6.0 4.0 2.0], [.9 .95 .98 .99 .99 .99], true);
 d = Differential(2.0);
 
+cnt = Controls;
+
+drt = SimpleDrivetrain(m, f, c, d, cnt);
 
 
 
