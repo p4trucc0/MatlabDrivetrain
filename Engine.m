@@ -31,7 +31,8 @@ classdef Engine < handle
         function tq = get_max_torque(obj, l, w)
             lambda_ind = interp1(obj.lambda_v, 1:numel(obj.lambda_v), l);
             rpm_ind = interp1(obj.rpm_v, 1:numel(obj.rpm_v), w);
-            tq = interp2(obj.torque_map, lambda_ind, rpm_ind);
+            % tq = interp2(obj.torque_map, lambda_ind, rpm_ind);
+            tq = interp2(obj.torque_map, rpm_ind, lambda_ind);
         end
         
         % TODO: introduce function taking friction into account.

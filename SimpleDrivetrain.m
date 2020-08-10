@@ -47,6 +47,9 @@ classdef SimpleDrivetrain < handle
                 w1_clutch = (M_clutch + M_sub_clutch) / J_diff;
                 w1_diff = w1_clutch / curr_gear_ratio / obj.differential.final_drive;
             end
+            if isnan(w1_engine)
+                keyboard;
+            end
         end
         
         
