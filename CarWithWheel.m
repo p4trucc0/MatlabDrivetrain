@@ -52,7 +52,7 @@ classdef CarWithWheel < handle
                 end
             end
             if k < -100
-                keyboard
+                %keyboard
             end
             [Fx_pac, ~, ~] = pacejka96(obj.wheel_pacejka_param, obj.mass*9.81*obj.tractive_mass_fraction / 1000, 0.0, k, 0.0);
             x2_body = (Fx_pac - F_aer) / obj.mass;

@@ -11,6 +11,14 @@ SmallFont = 10;
 
 % Functional Constants
 OperatingMode = 1; % 1: automation; 2: live (joypad)
+CurrentVals = struct('w_engine', rpm2rads(800), 'v_body', 0, ...
+    'w_wheel', 0);
+AutomationTrack = load('dummy_auto1.mat');
+SimulationDeltaTime = .01; %s
+DrawDeltaTime = 1/30; %s
+SimTime = 0.0;
+LastDrawTime = now;
+LastDrawSimTime = -1;
 
 % Global objects (such as drivetrain, etc)
 % TODO: define function to load and save a car's properties
@@ -40,21 +48,22 @@ SpeedPanel_Speed_Rear_Descr = uicontrol('parent', SpeedPanel, 'Style','edit', ..
     'String', 'V Rear [km/h]', 'FontSize', SmallFont, 'enable', 'inactive');
 SpeedPanel_Speed_Body_Val = uicontrol('parent', SpeedPanel, 'Style','edit', ...
     'units', 'norm', 'pos', [0.2 2/3 0.2 1/3], 'BackgroundColor', GaugeBackgroundColor, ...
-    'String', '0.0', 'FontSize', SmallFont, 'enable', 'inactive');
+    'String', num2str(3.6*CurrentVals.v_body), 'FontSize', SmallFont, 'enable', 'inactive');
 SpeedPanel_Speed_Front_Val = uicontrol('parent', SpeedPanel, 'Style','edit', ...
     'units', 'norm', 'pos', [0.2 1/3 0.2 1/3], 'BackgroundColor', GaugeBackgroundColor, ...
-    'String', '0.0', 'FontSize', SmallFont, 'enable', 'inactive');
+    'String', num2str(3.6*CurrentVals.w_wheel*Car.radius), 'FontSize', SmallFont, 'enable', 'inactive');
 SpeedPanel_Speed_Rear_Val = uicontrol('parent', SpeedPanel, 'Style','edit', ...
     'units', 'norm', 'pos', [0.2 0/3 0.2 1/3], 'BackgroundColor', GaugeBackgroundColor, ...
     'String', '0.0', 'FontSize', SmallFont, 'enable', 'inactive');
 % Engine speed: this will be changed once a better graphic widget is
-% available.
-SpeedPanel_Speed_Engine_Descr = uicontrol('parent', SpeedPanel, 'Style','edit', ...
-    'units', 'norm', 'pos', [0.4 .5 0.6 .5], 'BackgroundColor', PanelBackgroundColor, ...
-    'String', 'Engine Speed [RPM]', 'FontSize', SmallFont, 'enable', 'inactive');
-SpeedPanel_Speed_Engine_Val = uicontrol('parent', SpeedPanel, 'Style','edit', ...
-    'units', 'norm', 'pos', [0.4 0 0.6 .5], 'BackgroundColor', GaugeBackgroundColor, ...
-    'String', '0', 'FontSize', SmallFont, 'enable', 'inactive');
+% % available.
+% SpeedPanel_Speed_Engine_Descr = uicontrol('parent', SpeedPanel, 'Style','edit', ...
+%     'units', 'norm', 'pos', [0.4 .5 0.6 .5], 'BackgroundColor', PanelBackgroundColor, ...
+%     'String', 'Engine Speed [RPM]', 'FontSize', SmallFont, 'enable', 'inactive');
+% SpeedPanel_Speed_Engine_Val = uicontrol('parent', SpeedPanel, 'Style','edit', ...
+%     'units', 'norm', 'pos', [0.4 0 0.6 .5], 'BackgroundColor', GaugeBackgroundColor, ...
+%     'String', num2str(rads2rpm(CurrentVals.w_engine)), 'FontSize', SmallFont, 'enable', 'inactive');
+SpeedPanel_Engine = GaugeObj(SpeedPanel, 'RPM', [0.4 0 .6 1], rads2rpm(CurrentVals.w_engine), 0, 7100);
 
 % CtrlPanel - Contains indicators for the current state of controls
 CtrlPanel = uipanel('parent', RightPanel, 'units', 'norm', 'pos', [0 Vsep1 ...
@@ -73,9 +82,56 @@ SettingsPanel = uipanel('parent', RightPanel, 'units', 'norm', 'pos', ...
 SettingsPanel_mode_list = uicontrol('parent', SettingsPanel, 'Style', 'listbox', ...
     'units', 'norm', 'pos', [0 0 1/3 1], ...
     'String', {'Automation'; 'Active'}, 'Callback', @change_op_mode);
+SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbutton', ...
+    'units','norm', 'position', [2/3 0 1/3 1/4], 'String', 'Start', ...
+    'FontSize', SmallFont, 'Callback', @StartButtonCbck, ...
+    'BackgroundColor', [.9 .9 .9]);
+
 
     function change_op_mode(obj, event)
         OperatingMode = get(obj, 'Value');
     end
 
+    % Main loop
+    function StartButtonCbck(obj, event)
+        switch (OperatingMode)
+            case 1
+                simulateFromAutomation();
+        end
+    end
+
+    function simulateFromAutomation()
+        if ~isempty(AutomationTrack)
+            tf = AutomationTrack.autom.t(end);
+            while (SimTime < tf)
+                acc_p = interp1(AutomationTrack.autom.t, AutomationTrack.autom.gas, SimTime, 'previous');
+                brk_p = interp1(AutomationTrack.autom.t, AutomationTrack.autom.brk, SimTime, 'previous');
+                clc_p = interp1(AutomationTrack.autom.t, AutomationTrack.autom.clc, SimTime, 'previous');
+                gear_p = interp1(AutomationTrack.autom.t, AutomationTrack.autom.gear, SimTime, 'previous');
+                Car.drivetrain.controls.set_all(acc_p, brk_p, clc_p, gear_p);
+                CtrlPanel_Acc.set_val(Car.drivetrain.controls.gas_pedal);
+                CtrlPanel_Brk.set_val(Car.drivetrain.controls.brk_pedal);
+                CtrlPanel_Clc.set_val(Car.drivetrain.controls.clc_pedal);
+                CtrlPanel_Gear.set_val(Car.drivetrain.controls.gear_lever);
+                [av, ~] = Car.get_acc([CurrentVals.w_engine, CurrentVals.w_wheel, ...
+                    CurrentVals.v_body]);
+                % If writing, do it here.
+                CurrentVals.w_engine = CurrentVals.w_engine + av(1)*SimulationDeltaTime;
+                CurrentVals.w_wheel = CurrentVals.w_wheel + av(2)*SimulationDeltaTime;
+                CurrentVals.v_body = CurrentVals.v_body + av(3)*SimulationDeltaTime;
+                SimTime = SimTime + SimulationDeltaTime;
+                if (SimTime - LastDrawSimTime > DrawDeltaTime)
+                    SpeedPanel_Speed_Body_Val.String = num2str(3.6*CurrentVals.v_body);
+                    SpeedPanel_Speed_Front_Val.String = num2str(3.6*CurrentVals.w_wheel*Car.radius);
+                    % SpeedPanel_Speed_Engine_Val.String = num2str(rads2rpm(CurrentVals.w_engine));
+                    SpeedPanel_Engine.set_val(rads2rpm(CurrentVals.w_engine));
+                    drawnow;
+                end
+            end
+        else
+            error('No automation loaded');
+        end
+    end
+
+    
 end
