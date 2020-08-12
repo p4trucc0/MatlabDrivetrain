@@ -11,11 +11,11 @@ SmallFont = 10;
 
 % Functional Constants
 OperatingMode = 1; % 1: automation; 2: live (joypad)
-CurrentVals = struct('w_engine', rpm2rads(800), 'v_body', 0, ...
+CurrentVals = struct('w_engine', rpm2rads(4000), 'v_body', 0, ...
     'w_wheel', 0);
 AutomationTrack = load('dummy_auto1.mat');
 SimulationDeltaTime = .01; %s
-DrawDeltaTime = 1/30; %s
+DrawDeltaTime = 1/10; %s
 SimTime = 0.0;
 LastDrawTime = now;
 LastDrawSimTime = -1;
@@ -97,22 +97,21 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
         switch (OperatingMode)
             case 1
                 simulateFromAutomation();
+            case 2
+                simulateFromJoystick();
         end
     end
 
     function simulateFromAutomation()
         if ~isempty(AutomationTrack)
             tf = AutomationTrack.autom.t(end);
+            LastDrawTime = now;
             while (SimTime < tf)
                 acc_p = interp1(AutomationTrack.autom.t, AutomationTrack.autom.gas, SimTime, 'previous');
                 brk_p = interp1(AutomationTrack.autom.t, AutomationTrack.autom.brk, SimTime, 'previous');
                 clc_p = interp1(AutomationTrack.autom.t, AutomationTrack.autom.clc, SimTime, 'previous');
                 gear_p = interp1(AutomationTrack.autom.t, AutomationTrack.autom.gear, SimTime, 'previous');
                 Car.drivetrain.controls.set_all(acc_p, brk_p, clc_p, gear_p);
-                CtrlPanel_Acc.set_val(Car.drivetrain.controls.gas_pedal);
-                CtrlPanel_Brk.set_val(Car.drivetrain.controls.brk_pedal);
-                CtrlPanel_Clc.set_val(Car.drivetrain.controls.clc_pedal);
-                CtrlPanel_Gear.set_val(Car.drivetrain.controls.gear_lever);
                 [av, ~] = Car.get_acc([CurrentVals.w_engine, CurrentVals.w_wheel, ...
                     CurrentVals.v_body]);
                 % If writing, do it here.
@@ -121,11 +120,14 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
                 CurrentVals.v_body = CurrentVals.v_body + av(3)*SimulationDeltaTime;
                 SimTime = SimTime + SimulationDeltaTime;
                 if (SimTime - LastDrawSimTime > DrawDeltaTime)
-                    SpeedPanel_Speed_Body_Val.String = num2str(3.6*CurrentVals.v_body);
-                    SpeedPanel_Speed_Front_Val.String = num2str(3.6*CurrentVals.w_wheel*Car.radius);
-                    % SpeedPanel_Speed_Engine_Val.String = num2str(rads2rpm(CurrentVals.w_engine));
-                    SpeedPanel_Engine.set_val(rads2rpm(CurrentVals.w_engine));
+                    while (now - LastDrawTime < DrawDeltaTime/(24*3600))
+                        pause(.001);
+                    end
+                    updateView();
                     drawnow;
+                    fprintf('%f\n', (now - LastDrawTime)*24*3600);
+                    LastDrawTime = LastDrawTime + DrawDeltaTime/(24*3600);
+                    LastDrawSimTime = SimTime;
                 end
             end
         else
@@ -133,5 +135,58 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
         end
     end
 
-    
+    function simulateFromJoystick
+        j = HebiJoystick(1);
+        exitCondition = 0;
+        LastDrawTime = now;
+        IntermediateSteps = round(DrawDeltaTime / SimulationDeltaTime); % how many intermediate simulation steps.
+        while exitCondition == 0
+            b = j.button;
+            ax = j.read;
+            if b(1) == 1 % first button pressed
+                exitCondition = 1;
+                break;
+            end
+            clc_p = abs(ax(2)); % use left handle as clutch.
+            if ax(3) < .05
+                acc_p = abs(ax(3));
+                brk_p = 0;
+            else
+                brk_p = abs(ax(3));
+                acc_p = 0;
+            end
+            gear_p = 1; % for now, stuck in first gear.
+            Car.drivetrain.controls.set_all(acc_p, brk_p, clc_p, gear_p);
+            for i_step = 1:IntermediateSteps % perform a chunk of integrations.
+                [av, ~] = Car.get_acc([CurrentVals.w_engine, CurrentVals.w_wheel, ...
+                    CurrentVals.v_body]);
+                % If writing, do it here.
+                CurrentVals.w_engine = CurrentVals.w_engine + av(1)*SimulationDeltaTime;
+                CurrentVals.w_wheel = CurrentVals.w_wheel + av(2)*SimulationDeltaTime;
+                CurrentVals.v_body = CurrentVals.v_body + av(3)*SimulationDeltaTime;
+                SimTime = SimTime + SimulationDeltaTime;
+            end
+            while (now - LastDrawTime < DrawDeltaTime/(24*3600))
+                pause(.001);
+            end
+            updateView();
+            drawnow;
+            fprintf('%f\n', (now - LastDrawTime)*24*3600);
+            LastDrawTime = LastDrawTime + DrawDeltaTime/(24*3600);
+            %LastDrawSimTime = SimTime;
+        end
+    end
+
+    function updateView()
+        SpeedPanel_Speed_Body_Val.String = num2str(3.6*CurrentVals.v_body);
+        SpeedPanel_Speed_Front_Val.String = num2str(3.6*CurrentVals.w_wheel*Car.radius);
+        % SpeedPanel_Speed_Engine_Val.String = num2str(rads2rpm(CurrentVals.w_engine));
+        SpeedPanel_Engine.set_val(rads2rpm(CurrentVals.w_engine));
+        CtrlPanel_Acc.set_val(Car.drivetrain.controls.gas_pedal);
+        CtrlPanel_Brk.set_val(Car.drivetrain.controls.brk_pedal);
+        CtrlPanel_Clc.set_val(Car.drivetrain.controls.clc_pedal);
+        CtrlPanel_Gear.set_val(Car.drivetrain.controls.gear_lever);
+    end
+
+
 end

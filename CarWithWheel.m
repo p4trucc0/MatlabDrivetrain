@@ -54,6 +54,9 @@ classdef CarWithWheel < handle
             if k < -100
                 %keyboard
             end
+            if abs(k) > 100
+                k = 20*sign(k);
+            end
             [Fx_pac, ~, ~] = pacejka96(obj.wheel_pacejka_param, obj.mass*9.81*obj.tractive_mass_fraction / 1000, 0.0, k, 0.0);
             x2_body = (Fx_pac - F_aer) / obj.mass;
             % apply drivetrain law

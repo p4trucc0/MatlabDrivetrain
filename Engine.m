@@ -38,7 +38,11 @@ classdef Engine < handle
         % TODO: introduce function taking friction into account.
         function tq = get_torque(obj, l, w)
             tq_max = obj.get_max_torque(l, w);
-            tq = tq_max - (obj.fv_0 * w) - (obj.fv_1 * (w^2));
+            if w > 0
+                tq = tq_max - (obj.fv_0 * w) - (obj.fv_1 * (w^2));
+            else
+                tq = 0;
+            end
             if isnan(tq)
                 tq = 0;
             end
