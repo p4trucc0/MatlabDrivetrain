@@ -13,6 +13,9 @@ SmallFont = 10;
 OperatingMode = 1; % 1: automation; 2: live (joypad)
 
 % Global objects (such as drivetrain, etc)
+% TODO: define function to load and save a car's properties
+Car = generate_dummy_car();
+
 
 % Graphical build.
 Gui = figure('position', [50 50 1200 600]);
@@ -67,7 +70,12 @@ CtrlPanel_Gear = GaugeObj(CtrlPanel, 'Gear', [0 0 1 .25], 1, 0, 6);
 % simulation
 SettingsPanel = uipanel('parent', RightPanel, 'units', 'norm', 'pos', ...
     [0 0 1 Vsep1], 'BackgroundColor', PanelBackgroundColor);
+SettingsPanel_mode_list = uicontrol('parent', SettingsPanel, 'Style', 'listbox', ...
+    'units', 'norm', 'pos', [0 0 1/3 1], ...
+    'String', {'Automation'; 'Active'}, 'Callback', @change_op_mode);
 
-
+    function change_op_mode(obj, event)
+        OperatingMode = get(obj, 'Value');
+    end
 
 end
