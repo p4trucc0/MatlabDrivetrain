@@ -39,6 +39,9 @@ classdef Engine < handle
         function tq = get_torque(obj, l, w)
             tq_max = obj.get_max_torque(l, w);
             tq = tq_max - (obj.fv_0 * w) - (obj.fv_1 * (w^2));
+            if isnan(tq)
+                tq = 0;
+            end
         end
         
     end

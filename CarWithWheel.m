@@ -37,15 +37,22 @@ classdef CarWithWheel < handle
         % - engine speed 
         % - wheel (differential) speed
         % - car body speed
-        function x2v = get_acc(obj, x1v)
+        function [x2v, fv] = get_acc(obj, x1v)
             % Determine external forces
             x1_engine = x1v(1); x1_wheel = x1v(2); x1_body = x1v(3);
-            F_aer = .5*1.2*obj.front_surface*obj.drag_coeff*x1_body;
+            F_aer = .5*1.2*obj.front_surface*obj.drag_coeff*(x1_body^2);
             % get slip ratio
-            if x1_body == 0.0
+            if ((x1_body == 0.0) && (x1_wheel == 0.0))
                 k = 0;
             else
-                k = 100 * (x1_wheel*obj.radius - x1_body) / x1_body;
+                if (x1_body < 1.0)
+                    k = 100 * (x1_wheel*obj.radius - x1_body) / (x1_wheel*obj.radius);
+                else
+                    k = 100 * (x1_wheel*obj.radius - x1_body) / x1_body;
+                end
+            end
+            if k < -100
+                keyboard
             end
             [Fx_pac, ~, ~] = pacejka96(obj.wheel_pacejka_param, obj.mass*9.81*obj.tractive_mass_fraction / 1000, 0.0, k, 0.0);
             x2_body = (Fx_pac - F_aer) / obj.mass;
@@ -53,6 +60,7 @@ classdef CarWithWheel < handle
             wheel_torque = -Fx_pac * obj.radius;
             [x2_engine, x2_wheel] = obj.drivetrain.get_shaft_acc(x1_wheel, x1_engine, wheel_torque, obj.wheel_inertia);
             x2v = [x2_engine; x2_wheel; x2_body];
+            fv = [F_aer Fx_pac wheel_torque];
         end
         
     end
