@@ -40,11 +40,12 @@ classdef SimpleDrivetrain < handle
             else % two separate sub-systems
                 % Balance without inertias
                 clutch_factor = obj.clutch.get_engaged_factor(obj.controls.clc_pedal);
-                M_delta_clutch = M_engine - M_clutch;
-                M_sub_engine = - M_delta_clutch * clutch_factor;
-                M_sub_clutch = M_delta_clutch * clutch_factor;
-                w1_engine = (M_engine + M_sub_engine) / obj.engine.Jm;
-                w1_clutch = (M_clutch + M_sub_clutch) / J_diff;
+                %M_delta_clutch = M_engine - M_clutch;
+                %M_sub_engine = - M_delta_clutch * clutch_factor;
+                %M_sub_clutch = M_delta_clutch * clutch_factor;
+                M_sub = obj.clutch.kf*clutch_factor*(w_engine - w_clutch);
+                w1_engine = (M_engine - M_sub) / obj.engine.Jm;
+                w1_clutch = (M_clutch + M_sub) / J_diff;
                 w1_diff = w1_clutch / curr_gear_ratio / obj.differential.final_drive;
             end
             if isnan(w1_engine)

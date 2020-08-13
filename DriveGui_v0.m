@@ -19,6 +19,7 @@ DrawDeltaTime = 1/10; %s
 SimTime = 0.0;
 LastDrawTime = now;
 LastDrawSimTime = -1;
+OutputFileName = ['debug_', datestr(now, 'yyyy_mm_dd_HH_MM_SS'), '.txt'];
 
 % Global objects (such as drivetrain, etc)
 % TODO: define function to load and save a car's properties
@@ -137,8 +138,11 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
 
     function simulateFromJoystick
         j = HebiJoystick(1);
+        f1 = fopen(OutputFileName, 'a');
+        fprintf(f1, 't,clc_p,acc_p,brk_p,gear,w_engine,w_wheel,v_body\n');
         exitCondition = 0;
         LastDrawTime = now;
+        SimTime = 0.0;
         IntermediateSteps = round(DrawDeltaTime / SimulationDeltaTime); % how many intermediate simulation steps.
         while exitCondition == 0
             b = j.button;
@@ -165,6 +169,9 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
                 CurrentVals.w_wheel = CurrentVals.w_wheel + av(2)*SimulationDeltaTime;
                 CurrentVals.v_body = CurrentVals.v_body + av(3)*SimulationDeltaTime;
                 SimTime = SimTime + SimulationDeltaTime;
+                fprintf(f1, '%f,%f,%f,%f,%f,%f,%f,%f\n', SimTime, clc_p, acc_p, brk_p, ...
+                    gear_p, CurrentVals.w_engine, CurrentVals.w_wheel, ...
+                    CurrentVals.v_body);
             end
             while (now - LastDrawTime < DrawDeltaTime/(24*3600))
                 pause(.001);
@@ -175,6 +182,7 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
             LastDrawTime = LastDrawTime + DrawDeltaTime/(24*3600);
             %LastDrawSimTime = SimTime;
         end
+        fclose(f1);
     end
 
     function updateView()

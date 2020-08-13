@@ -4,9 +4,18 @@ classdef Clutch < handle
         is_coupled = false; % if true, the clutch behaves as a simple rod.
         ef_thr = .99; % if greater than this, consider engine fully engaged
         sp_thr = .98; % max speed differential between engine and gearbox
+        kf = .1;
     end
     
     methods
+        
+        function obj = Clutch(n_kf)
+            if nargin < 1
+                obj.kf = .1;
+            else
+                obj.kf = n_kf;
+            end
+        end
         
         % Dummy function returning an "engagement factor" which is, for the
         % time being, just equal to the pedal position

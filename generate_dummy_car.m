@@ -13,7 +13,7 @@ nfv0 = 0.0005;
 nfv1 = 1e-7;
 
 m = Engine(nlambda_v, nrpm_v, ntorque_map, nfv0, nfv1, nJm);
-f = Clutch;
+f = Clutch(0.5);
 c = Gearbox([-15.0 10.0 8.0 6.0 4.0 2.0], [.9 .95 .98 .99 .99 .99], true);
 d = Differential(2.0);
 cnt = Controls;
