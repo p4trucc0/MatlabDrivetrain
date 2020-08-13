@@ -46,7 +46,8 @@ classdef CarWithWheel < handle
                 k = 0;
             else
                 if (x1_body < 1.0)
-                    k = 100 * (x1_wheel*obj.radius - x1_body) / (x1_wheel*obj.radius);
+                    % k = 100 * (x1_wheel*obj.radius - x1_body) / (x1_wheel*obj.radius);
+                    k = 100 * (x1_wheel*obj.radius - x1_body) / 1.0;
                 else
                     k = 100 * (x1_wheel*obj.radius - x1_body) / x1_body;
                 end

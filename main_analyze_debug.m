@@ -5,7 +5,7 @@ clc
 %% Patrucco, 2020
 % Debugging tool for the 1D simulation environment
 
-FileName = 'debug_2020_08_13_15_33_59.txt';
+FileName = 'debug_2020_08_13_16_03_22.txt';
 
 a = generate_dummy_car();
 
