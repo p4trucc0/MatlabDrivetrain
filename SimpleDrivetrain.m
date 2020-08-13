@@ -25,14 +25,25 @@ classdef SimpleDrivetrain < handle
         
         % Returns shaft rotational acceleration for both engine and
         % clutch/gearbox.
-        function [w1_engine, w1_diff] = get_shaft_acc(obj, w_diff, w_engine, M_diff, J_diff) % takes as input speeds of differential and of engine, and torque applied to the differential
+        function [w1_engine, w1_diff] = get_shaft_acc(obj, w_diff, w_engine, M_diff, J_diff, dt) % takes as input speeds of differential and of engine, and torque applied to the differential
             % Calculate maximum current braking torque.
+            if nargin < 6
+                dt = .01;
+            end
             M_brake_max = obj.brake.get_simple_brake_torque(obj.controls.brk_pedal);
             M_brake_wheel = -M_brake_max * sign(w_diff); % always opposes speed.
+            if M_brake_wheel == 0
+                M_brake_wheel = M_brake_max;
+            end
             if abs(w_diff) > .1 % tyre not still
                 tyre_is_still = false;
             else
                 tyre_is_still = true;
+            end
+            if abs(w_diff) > 5 % tyre not still
+                close_to_still = false;
+            else
+                close_to_still = true;
             end
             w_gear = w_diff * obj.differential.final_drive;
             curr_gear = obj.controls.gear_lever;
@@ -54,11 +65,21 @@ classdef SimpleDrivetrain < handle
                 w1_engine = (M_engine - M_sub) / obj.engine.Jm;
                 if ~tyre_is_still
                     w1_clutch = (M_clutch + M_sub + M_brake) / J_diff;
+                    if close_to_still % approaching zero speed.
+                        if abs(M_brake_wheel) > 100 % braking in a consistent way
+                            if sign(w1_clutch)*sign(w_clutch) == -1 % reducing absolute wheel speed
+                                if sign(w_clutch)*(w_clutch + w1_clutch*dt) < 0
+                                    w1_clutch = -w_clutch / dt; % bring speed to zero.
+                                end
+                            end
+                        end
+                    end
                 else
                     M_brake = 2*M_brake; % static friction coefficient.
-                    if (abs(M_sub + M_clutch) > abs(M_brake)) || (sign(M_sub + M_clutch)*sign(M_brake) == 1)
+                    if (abs(M_sub + M_clutch) > abs(M_brake)) %|| (sign(M_sub + M_clutch)*sign(M_brake) == 1)
                         w1_clutch = (M_clutch + M_sub + M_brake) / J_diff;
                     else
+                        % w1_clutch = -w_clutch / dt; % bring speed to zero.
                         w1_clutch = 0;
                     end
                 end

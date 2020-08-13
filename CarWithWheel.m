@@ -14,6 +14,7 @@ classdef CarWithWheel < handle
         front_surface = NaN; % m2
         drag_coeff = NaN; % []
         drivetrain = []; % Drivetrain object
+        dt = .01; % integration step.
     end
     
     methods
@@ -45,9 +46,9 @@ classdef CarWithWheel < handle
             if ((x1_body == 0.0) && (x1_wheel == 0.0))
                 k = 0;
             else
-                if (x1_body < 1.0)
+                if (x1_body < 3.0)
                     % k = 100 * (x1_wheel*obj.radius - x1_body) / (x1_wheel*obj.radius);
-                    k = 100 * (x1_wheel*obj.radius - x1_body) / 1.0;
+                    k = 100 * (x1_wheel*obj.radius - x1_body) / 3.0;
                 else
                     k = 100 * (x1_wheel*obj.radius - x1_body) / x1_body;
                 end
@@ -62,7 +63,7 @@ classdef CarWithWheel < handle
             x2_body = (Fx_pac - F_aer) / obj.mass;
             % apply drivetrain law
             wheel_torque = -Fx_pac * obj.radius;
-            [x2_engine, x2_wheel] = obj.drivetrain.get_shaft_acc(x1_wheel, x1_engine, wheel_torque, obj.wheel_inertia);
+            [x2_engine, x2_wheel] = obj.drivetrain.get_shaft_acc(x1_wheel, x1_engine, wheel_torque, obj.wheel_inertia, obj.dt);
             x2v = [x2_engine; x2_wheel; x2_body];
             fv = [F_aer Fx_pac wheel_torque];
         end

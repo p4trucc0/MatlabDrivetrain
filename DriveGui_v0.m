@@ -14,7 +14,7 @@ OperatingMode = 1; % 1: automation; 2: live (joypad)
 CurrentVals = struct('w_engine', rpm2rads(4000), 'v_body', 0, ...
     'w_wheel', 0);
 AutomationTrack = load('dummy_auto1.mat');
-SimulationDeltaTime = .001; %s
+SimulationDeltaTime = .01; %s
 DrawDeltaTime = 1/10; %s
 SimTime = 0.0;
 LastDrawTime = now;
@@ -24,6 +24,7 @@ OutputFileName = ['debug_', datestr(now, 'yyyy_mm_dd_HH_MM_SS'), '.txt'];
 % Global objects (such as drivetrain, etc)
 % TODO: define function to load and save a car's properties
 Car = generate_dummy_car();
+Car.dt = SimulationDeltaTime;
 
 
 % Graphical build.
