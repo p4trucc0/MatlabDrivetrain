@@ -16,9 +16,10 @@ m = Engine(nlambda_v, nrpm_v, ntorque_map, nfv0, nfv1, nJm);
 f = Clutch(0.5);
 c = Gearbox([-15.0 10.0 8.0 6.0 4.0 2.0], [.9 .95 .98 .99 .99 .99], true);
 d = Differential(2.0);
+b = Brake(0.3, .07, .11, pi/4, 60000);
 cnt = Controls;
 
-drt = SimpleDrivetrain(m, f, c, d, cnt);
+drt = SimpleDrivetrain(m, f, c, d, b, cnt);
 
 tyre_param = struct();
 tyre_param.a0 = 1.4660; tyre_param.a1 = -7.4; tyre_param.a2 = 999;

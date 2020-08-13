@@ -14,7 +14,7 @@ OperatingMode = 1; % 1: automation; 2: live (joypad)
 CurrentVals = struct('w_engine', rpm2rads(4000), 'v_body', 0, ...
     'w_wheel', 0);
 AutomationTrack = load('dummy_auto1.mat');
-SimulationDeltaTime = .01; %s
+SimulationDeltaTime = .001; %s
 DrawDeltaTime = 1/10; %s
 SimTime = 0.0;
 LastDrawTime = now;
@@ -143,13 +143,25 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
         exitCondition = 0;
         LastDrawTime = now;
         SimTime = 0.0;
+        LastGearChange = 0.0;
         IntermediateSteps = round(DrawDeltaTime / SimulationDeltaTime); % how many intermediate simulation steps.
+        gear_p = 1;
+        LastDrawTime2 = now;
         while exitCondition == 0
             b = j.button;
             ax = j.read;
             if b(1) == 1 % first button pressed
                 exitCondition = 1;
                 break;
+            end
+            if (SimTime - LastGearChange > 0.5) % TODO: Move this hardcoded thing from here
+                if b(7) == 1
+                    gear_p = gear_p - 1;
+                    LastGearChange = SimTime;
+                elseif b(8) == 1
+                    gear_p = gear_p + 1;
+                    LastGearChange = SimTime;
+                end
             end
             clc_p = abs(ax(2)); % use left handle as clutch.
             if ax(3) < .05
@@ -159,7 +171,6 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
                 brk_p = abs(ax(3));
                 acc_p = 0;
             end
-            gear_p = 1; % for now, stuck in first gear.
             Car.drivetrain.controls.set_all(acc_p, brk_p, clc_p, gear_p);
             for i_step = 1:IntermediateSteps % perform a chunk of integrations.
                 [av, ~] = Car.get_acc([CurrentVals.w_engine, CurrentVals.w_wheel, ...
@@ -173,12 +184,13 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
                     gear_p, CurrentVals.w_engine, CurrentVals.w_wheel, ...
                     CurrentVals.v_body);
             end
+            fprintf('Computing time: %f\n', (now - LastDrawTime2)*24*3600);
             while (now - LastDrawTime < DrawDeltaTime/(24*3600))
                 pause(.001);
             end
             updateView();
             drawnow;
-            fprintf('%f\n', (now - LastDrawTime)*24*3600);
+            LastDrawTime2 = now;
             LastDrawTime = LastDrawTime + DrawDeltaTime/(24*3600);
             %LastDrawSimTime = SimTime;
         end
