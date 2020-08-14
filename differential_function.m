@@ -24,7 +24,11 @@ else
 % differential it might be useful to consider other options.
 if diff_mode == 0 % open
     if wm == 0 % no solution exists.
-        w1v = zeros(3, 1);
+        w1m = (Mm - Mr - Ml) / (Jm + Jr + Jl);
+        M = [-1, -1; ...
+            (frac(2)*Jl), -(frac(1)*Jr)];
+        n = [-2*w1m; frac(1)*Mr - frac(2)*Ml];
+        w1v = [w1m; M \ n];
     else
         M = [2, -1, -1; ...
             (Jm*wm), (Jl*wl), (Jr*wr); ...
