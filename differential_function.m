@@ -47,6 +47,9 @@ elseif diff_mode == 1 % closed
         n = [0; Mm*wm - Ml*wl - Mr*wr; 0];
         w1v = M \ n;
     end
+elseif (diff_mode > 0 && diff_mode < 1) % intermediate, "locking" differential
+    w1v = (1 - diff_mode)*differential_function(w0v, Jm, Jl, Jr, Mm, Ml, Mr, 0, frac) + ...
+        diff_mode*differential_function(w0v, Jm, Jl, Jr, Mm, Ml, Mr, 1, frac);
 end
 
 
