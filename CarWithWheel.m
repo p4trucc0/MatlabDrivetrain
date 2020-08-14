@@ -15,6 +15,7 @@ classdef CarWithWheel < handle
         drag_coeff = NaN; % []
         drivetrain = []; % Drivetrain object
         dt = .01; % integration step.
+        tol_speed_static = 0.01;
     end
     
     methods
@@ -43,7 +44,7 @@ classdef CarWithWheel < handle
             x1_engine = x1v(1); x1_wheel = x1v(2); x1_body = x1v(3);
             F_aer = .5*1.2*obj.front_surface*obj.drag_coeff*(x1_body^2);
             % get slip ratio
-            if ((x1_body == 0.0) && (x1_wheel == 0.0))
+            if ((abs(x1_body) < obj.tol_speed_static) && (abs(x1_wheel) < obj.tol_speed_static))
                 k = 0;
             else
                 if (x1_body < 3.0)
