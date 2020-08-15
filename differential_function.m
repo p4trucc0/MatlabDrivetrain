@@ -19,9 +19,6 @@ if (abs(wl + wr - 2*wm) > tol)
     w1v = zeros(3, 1);
 else
 
-% TODO: Introduce capability to statically distribute a fraction of torque
-% towards one shaft. Basically it is 50:50, but for use as a center
-% differential it might be useful to consider other options.
 if diff_mode == 0 % open
     if wm == 0 % no solution exists.
         w1m = (Mm - Mr - Ml) / (Jm + Jr + Jl);
