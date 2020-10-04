@@ -56,8 +56,8 @@ add_param.type_descr = diff_types{diff_setup};
 switch(diff_setup)
     case 1 % FWD, free
         [Md, th2_as, th2_ad, M_as, M_ad] = two_wd_free_diff(Fx_as, Fx_ad, th1_as, th1_ad, Jr_as, Jr_ad, R_as, R_ad, Mf_as, Mf_ad);
-        th2_ps = disc_tyre_acc(J_ps, Mf_ps, Fx_ps, R_ps);
-        th2_pd = disc_tyre_acc(J_pd, Mf_pd, Fx_pd, R_pd);
+        th2_ps = disc_tyre_acc(Jr_ps, Mf_ps, Fx_ps, R_ps);
+        th2_pd = disc_tyre_acc(Jr_pd, Mf_pd, Fx_pd, R_pd);
         Mda = Md;
         Mdp = 0;
         th2d = (th2_as + th2_ad)/2; % free diff relation
@@ -65,14 +65,14 @@ switch(diff_setup)
         M_pd = 0;
     case 2 % FWD, locked - MISSING FRICTION!
         J_red_f = (Jr_as/(t^2) + Jr_ad/(t^2) + Jc);
-        M_red_f = -Mc - (1/t)*(Mf_as + Mf_ad + R_as*Fx_as + R_ad*Fx_ad);
+        M_red_f = -Mc - (1/t)*(Mf_as + Mf_ad + R_as*Fx_as + R_ad*Fx_ad) - rc*(th1d*t) - rd*(th1d/t);
         th2_f = M_red_f / J_red_f;
-        th2d = t*th2_f;
-        th2_as = t*th2_f;
-        th2_ad = t*th2_f;
-        th2_ps = disc_tyre_acc(J_ps, Mf_ps, Fx_ps, R_ps);
-        th2_pd = disc_tyre_acc(J_pd, Mf_pd, Fx_pd, R_pd);
-        Md = -t*Mc;
+        th2d = th2_f/t;
+        th2_as = th2_f/t;
+        th2_ad = th2_f/t;
+        th2_ps = disc_tyre_acc(Jr_ps, Mf_ps, Fx_ps, R_ps);
+        th2_pd = disc_tyre_acc(Jr_pd, Mf_pd, Fx_pd, R_pd);
+        Md = (Mf_as + Mf_ad + R_as*Fx_as + R_ad*Fx_ad) + (Jr_as + Jr_ad)*th2_as;
         Mda = Md;
         Mdp = 0;
         M_ps = 0;
@@ -81,8 +81,8 @@ switch(diff_setup)
         M_ad = Mf_ad + Fx_ad*R_ad + Jr_ad*th2_ad;
     case 3 % RWD, free
         [Md, th2_ps, th2_pd, M_ps, M_pd] = two_wd_free_diff(Fx_ps, Fx_pd, th1_ps, th1_pd, Jr_ps, Jr_pd, R_ps, R_pd, Mf_ps, Mf_pd);
-        th2_as = disc_tyre_acc(J_as, Mf_as, Fx_as, R_as);
-        th2_ad = disc_tyre_acc(J_ad, Mf_ad, Fx_ad, R_ad);
+        th2_as = disc_tyre_acc(Jr_as, Mf_as, Fx_as, R_as);
+        th2_ad = disc_tyre_acc(Jr_ad, Mf_ad, Fx_ad, R_ad);
         Mda = 0;
         Mdp = Md;
         th2d = (th2_ps + th2_pd)/2; % free diff relation
@@ -90,14 +90,14 @@ switch(diff_setup)
         M_ad = 0;
     case 4 % RWD, locked - MISSING FRICTION!
         J_red_f = (Jr_ps/(t^2) + Jr_pd/(t^2) + Jc);
-        M_red_f = -Mc - (1/t)*(Mf_ps + Mf_pd + R_ps*Fx_ps + R_pd*Fx_pd);
+        M_red_f = -Mc - (1/t)*(Mf_ps + Mf_pd + R_ps*Fx_ps + R_pd*Fx_pd) - rc*(th1d*t) - rd*(th1d/t);
         th2_f = M_red_f / J_red_f;
-        th2d = t*th2_f;
-        th2_ps = t*th2_f;
-        th2_pd = t*th2_f;
-        th2_as = disc_tyre_acc(J_as, Mf_as, Fx_as, R_as);
-        th2_ad = disc_tyre_acc(J_ad, Mf_ad, Fx_ad, R_ad);
-        Md = -t*Mc;
+        th2d = th2_f/t;
+        th2_ps = th2_f/t;
+        th2_pd = th2_f/t;
+        th2_as = disc_tyre_acc(Jr_as, Mf_as, Fx_as, R_as);
+        th2_ad = disc_tyre_acc(Jr_ad, Mf_ad, Fx_ad, R_ad);
+        Md = (Mf_ps + Mf_pd + R_ps*Fx_ps + R_pd*Fx_pd) + (Jr_ps + Jr_pd)*th2_ps;
         Mda = 0;
         Mdp = Md;
         M_as = 0;
@@ -175,14 +175,14 @@ switch(diff_setup)
     case 8 % all diffs locked
         J_red_d = (Jc*(t^2) + Jr_as + Jr_ad + Jr_ps + Jr_pd);
         M_red_d = -Mc*t - (rc*(t^2) + rd)*th1d - (Mf_as + Mf_ad + Mf_ps + ...
-            Mf_pd) - (Fx_as*R_as + Fx_ad*R_ad + Fx_ps*R_ps + Rx_pd*R_pd);
+            Mf_pd) - (Fx_as*R_as + Fx_ad*R_ad + Fx_ps*R_ps + Fx_pd*R_pd);
         th2d = M_red_d / J_red_d;
         th2_as = th2d;
         th2_ad = th2d;
         th2_ps = th2d;
         th2_pd = th2d;
         Md = (Jr_as + Jr_ad + Jr_ps + Jr_pd)*th2d + (Mf_as + Mf_ad + Mf_ps + ...
-            Mf_pd) + (Fx_as*R_as + Fx_ad*R_ad + Fx_ps*R_ps + Rx_pd*R_pd);
+            Mf_pd) + (Fx_as*R_as + Fx_ad*R_ad + Fx_ps*R_ps + Fx_pd*R_pd);
         M_as = Mf_as + Fx_as*R_as + Jr_as*th2_as;
         M_ad = Mf_ad + Fx_ad*R_ad + Jr_ad*th2_ad;
         M_ps = Mf_ps + Fx_ps*R_ps + Jr_ps*th2_ps;
@@ -299,8 +299,8 @@ M_v = [M_as; M_ad; M_ps; M_pd];
         Md = x2wd(1);
         th2_s = x2wd(2);
         th2_d = x2wd(3);
-        Mrs = -.5*Mc;
-        Mrd = -.5*Mc;
+        Mrs = Fxs*Rs + Mfs + th2_s*Jrs;
+        Mrd = Fxd*Rd + Mfd + th2_d*Jrd;
     end
 
     function th2_free = disc_tyre_acc(Jt, Mft, Fxt, Rt)
