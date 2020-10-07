@@ -5,15 +5,24 @@ classdef Clutch < handle
         ef_thr = .99; % if greater than this, consider engine fully engaged
         sp_thr = .98; % max speed differential between engine and gearbox
         kf = .1;
+        J = 0.1;
+        r = 0.0;
     end
     
     methods
         
-        function obj = Clutch(n_kf)
+        function obj = Clutch(n_kf, n_J, n_r)
             if nargin < 1
                 obj.kf = .1;
             else
                 obj.kf = n_kf;
+                if nargin > 1
+                    obj.J = n_J;
+                    obj.r = n_r;
+                else
+                    obj.J = 0.1;
+                    obj.r = 0.0;
+                end
             end
         end
         
