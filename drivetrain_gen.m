@@ -167,6 +167,8 @@ u_f = [u_f_hi; u_sub];
 u_cf = u_sf + u_f;
 if brake_check
     x_sf = M \ u_sf;
+    ind2switch = find(th1_v == 0) + 1; % find locked wheels
+    
     % At least one shaft is locked, check if it remains so...
 else
     x = M \ u_cf;
@@ -181,9 +183,12 @@ Mdp = M_v(3) + M_v(4);
 
 
 
-
-
-
+    function Mlock = find_locking_torques(i2s)
+        [Mr, yr, xr] = recompose_linear_system(M, zeros(size(M, 1), 1), -x_sf, i2s);
+        
+        xx = Mr \ yr;
+        Mlock = xx(length(xx)-length(i2s)+1:end);
+    end
 
 
 
