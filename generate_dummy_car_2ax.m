@@ -8,7 +8,7 @@ nrpm_v = [0 500 1000 2000 3000 4000 5000 6000 7000 7100 8000];
 ntorque_map = [100.0 0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0 -100.0;
                100.0 0.0  20.0  30.0  40.0  30.0  20.0  10.0   5.0   0.0 -100.0;
                100.0 0.0  40.0  70.0 100.0  75.0  50.0  20.0  10.0   0.0 -100.0];
-nJm = 0.14;
+nJm = 1.0;
 nfv0 = 0.0005;
 nfv1 = 1e-7;
 
@@ -48,8 +48,8 @@ tyre_param.c19 = 0; tyre_param.c20 = 0;
 tyre_param.b9 = 0;
 tyre_param.b10 = 0;
 
-w_f = Wheel(0.3, .1, tyre_param);
-w_r = Wheel(0.3, .1, tyre_param);
+w_f = Wheel(0.3, 2.0, tyre_param);
+w_r = Wheel(0.3, 2.0, tyre_param);
 drt = Drivetrain2Axle_v2(m, f, c, d, ...
                 bs, cnt, w_f, w_r);
 

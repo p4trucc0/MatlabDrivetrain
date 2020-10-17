@@ -12,7 +12,11 @@ SmallFont = 10;
 % Functional Constants
 OperatingMode = 1; % 1: automation; 2: live (joypad)
 CurrentVals = struct('w_engine', rpm2rads(4000), 'v_body', 0, ...
-    'w_wheel', 0);
+    'w_wheel_front', 0, 'w_wheel_rear', 0, 'Fx_front', 0, ...
+    'Fx_rear', 0, 'Fz_front', 0, 'Fz_rear', 0, 'w_clutch', 0);
+BufferedVals = CurrentVals;
+BufferedVals.N = 0;
+ValsToShow = CurrentVals;
 AutomationTrack = load('dummy_auto1.mat');
 SimulationDeltaTime = .01; %s
 DrawDeltaTime = 1/10; %s
@@ -23,7 +27,7 @@ OutputFileName = ['debug_', datestr(now, 'yyyy_mm_dd_HH_MM_SS'), '.txt'];
 
 % Global objects (such as drivetrain, etc)
 % TODO: define function to load and save a car's properties
-Car = generate_dummy_car();
+Car = generate_dummy_car_2ax();
 Car.dt = SimulationDeltaTime;
 
 
@@ -53,10 +57,10 @@ SpeedPanel_Speed_Body_Val = uicontrol('parent', SpeedPanel, 'Style','edit', ...
     'String', num2str(3.6*CurrentVals.v_body), 'FontSize', SmallFont, 'enable', 'inactive');
 SpeedPanel_Speed_Front_Val = uicontrol('parent', SpeedPanel, 'Style','edit', ...
     'units', 'norm', 'pos', [0.2 1/3 0.2 1/3], 'BackgroundColor', GaugeBackgroundColor, ...
-    'String', num2str(3.6*CurrentVals.w_wheel*Car.radius), 'FontSize', SmallFont, 'enable', 'inactive');
+    'String', num2str(3.6*CurrentVals.w_wheel_front*Car.wheel_front.R), 'FontSize', SmallFont, 'enable', 'inactive');
 SpeedPanel_Speed_Rear_Val = uicontrol('parent', SpeedPanel, 'Style','edit', ...
     'units', 'norm', 'pos', [0.2 0/3 0.2 1/3], 'BackgroundColor', GaugeBackgroundColor, ...
-    'String', '0.0', 'FontSize', SmallFont, 'enable', 'inactive');
+    'String', num2str(3.6*CurrentVals.w_wheel_rear*Car.wheel_rear.R), 'FontSize', SmallFont, 'enable', 'inactive');
 % Engine speed: this will be changed once a better graphic widget is
 % % available.
 % SpeedPanel_Speed_Engine_Descr = uicontrol('parent', SpeedPanel, 'Style','edit', ...
@@ -114,17 +118,29 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
                 clc_p = interp1(AutomationTrack.autom.t, AutomationTrack.autom.clc, SimTime, 'previous');
                 gear_p = interp1(AutomationTrack.autom.t, AutomationTrack.autom.gear, SimTime, 'previous');
                 Car.drivetrain.controls.set_all(acc_p, brk_p, clc_p, gear_p);
-                [av, ~] = Car.get_acc([CurrentVals.w_engine, CurrentVals.w_wheel, ...
-                    CurrentVals.v_body]);
+                cvals = [CurrentVals.w_engine; CurrentVals.w_clutch; ...
+                    CurrentVals.w_wheel_front; CurrentVals.w_wheel_rear; ...
+                    CurrentVals.v_body];
+                [av, a_params] = Car.get_acc(cvals);
+                avi = integrate_cgs(cvals, av, SimulationDeltaTime);
                 % If writing, do it here.
-                CurrentVals.w_engine = CurrentVals.w_engine + av(1)*SimulationDeltaTime;
-                CurrentVals.w_wheel = CurrentVals.w_wheel + av(2)*SimulationDeltaTime;
-                CurrentVals.v_body = CurrentVals.v_body + av(3)*SimulationDeltaTime;
+                CurrentVals.w_engine = avi(1);
+                CurrentVals.w_clutch = avi(2);
+                CurrentVals.w_wheel_front = avi(3);
+                CurrentVals.w_wheel_rear = avi(4);
+                CurrentVals.v_body = avi(5);
                 SimTime = SimTime + SimulationDeltaTime;
+                BufferedVals.w_engine = BufferedVals.w_engine + CurrentVals.w_engine;
+                BufferedVals.w_clutch = BufferedVals.w_clutch + CurrentVals.w_clutch;
+                BufferedVals.w_wheel_front = BufferedVals.w_wheel_front + CurrentVals.w_wheel_front;
+                BufferedVals.w_wheel_rear = BufferedVals.w_wheel_rear + CurrentVals.w_wheel_rear;
+                BufferedVals.v_body = BufferedVals.v_body + CurrentVals.v_body;
+                BufferedVals.N = BufferedVals.N + 1;
                 if (SimTime - LastDrawSimTime > DrawDeltaTime)
                     while (now - LastDrawTime < DrawDeltaTime/(24*3600))
                         pause(.001);
                     end
+                    fprintf('%f\t', (now - LastDrawTime)*24*3600);
                     updateView();
                     drawnow;
                     fprintf('%f\n', (now - LastDrawTime)*24*3600);
@@ -132,6 +148,7 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
                     LastDrawSimTime = SimTime;
                 end
             end
+            % keyboard
         else
             error('No automation loaded');
         end
@@ -199,15 +216,29 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
     end
 
     function updateView()
-        SpeedPanel_Speed_Body_Val.String = num2str(3.6*CurrentVals.v_body);
-        SpeedPanel_Speed_Front_Val.String = num2str(3.6*CurrentVals.w_wheel*Car.radius);
+        ValsToShow.w_engine = BufferedVals.w_engine / BufferedVals.N;
+        ValsToShow.w_clutch = BufferedVals.w_engine / BufferedVals.N;
+        ValsToShow.w_wheel_rear = BufferedVals.w_wheel_rear / BufferedVals.N;
+        ValsToShow.w_wheel_front = BufferedVals.w_wheel_front / BufferedVals.N;
+        ValsToShow.v_body = BufferedVals.v_body / BufferedVals.N;
+        SpeedPanel_Speed_Body_Val.String = num2str(3.6*ValsToShow.v_body);
+        SpeedPanel_Speed_Front_Val.String = num2str(3.6*ValsToShow.w_wheel_front*Car.wheel_front.R);
+        SpeedPanel_Speed_Rear_Val.String = num2str(3.6*ValsToShow.w_wheel_rear*Car.wheel_rear.R);
         % SpeedPanel_Speed_Engine_Val.String = num2str(rads2rpm(CurrentVals.w_engine));
-        SpeedPanel_Engine.set_val(rads2rpm(CurrentVals.w_engine));
+        SpeedPanel_Engine.set_val(rads2rpm(ValsToShow.w_engine));
         CtrlPanel_Acc.set_val(Car.drivetrain.controls.gas_pedal);
         CtrlPanel_Brk.set_val(Car.drivetrain.controls.brk_pedal);
         CtrlPanel_Clc.set_val(Car.drivetrain.controls.clc_pedal);
         CtrlPanel_Gear.set_val(Car.drivetrain.controls.gear_lever);
+        resetBuffer();
     end
 
+
+    function resetBuffer()
+        fnab = fieldnames(BufferedVals);
+        for i_f = 1:length(fnab)
+            BufferedVals.(fnab{i_f}) = 0;
+        end
+    end
 
 end
