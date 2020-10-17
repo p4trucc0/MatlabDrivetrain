@@ -165,7 +165,9 @@ if brake_check
         get_lock_subm()];
     M_ba_c = M_ba; % current
     % U_ba_c = U_ba; % current
-    Mfc = Mfv;
+    u_sf = [u_sf_hi; zeros(4, 1)];
+    x_sf = M \ u_sf;
+    Mfc = abs(Mfv).*-sign(x_sf(7:10));
     Mfc(disc_status) = Mfc(disc_status)*2;
     while keep_checking
         % Introduce known braking effect!
@@ -179,7 +181,7 @@ if brake_check
         U_ba_c(4+rows2excl) = 0; %Mfc(lock_status);
         xf_p = M_ba_c \ U_ba_c;
         Mfp_c = xf_p(11:14);
-        brk_trq_relation = Mfp_c <= Mfc;
+        brk_trq_relation = abs(Mfp_c) <= abs(Mfc);
         if all(lock_status | brk_trq_relation) %(all(lock_status) || all(brk_trq_relation))
             keep_checking = false;
             Mfp_c(lock_status) = Mfc(lock_status);
