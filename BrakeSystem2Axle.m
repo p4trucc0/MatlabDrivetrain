@@ -24,8 +24,8 @@ classdef BrakeSystem2Axle < handle
                 brk_f = (brk_f / brk_r) * brk_x;
                 brk_r = brk_x;
             end
-            Mf = brk_f.get_simple_brake_torque(brk_f);
-            Mr = brk_r.get_simple_brake_torque(brk_r);
+            Mf = obj.front_brake.get_simple_brake_torque(brk_f);
+            Mr = obj.rear_brake.get_simple_brake_torque(brk_r);
         end
         
     end

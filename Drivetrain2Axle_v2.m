@@ -18,14 +18,13 @@ classdef Drivetrain2Axle_v2 < handle
     
     methods
         
-        function obj = Drivedtrain2Axle_v2(n_engine, n_clutch, n_gearbox, n_differential, ...
-                n_brake_system, n_axles, n_controls, n_wheel_front, n_wheel_rear)
+        function obj = Drivetrain2Axle_v2(n_engine, n_clutch, n_gearbox, n_differential, ...
+                n_brake_system, n_controls, n_wheel_front, n_wheel_rear)
             obj.engine = n_engine;
             obj.clutch = n_clutch;
             obj.gearbox = n_gearbox;
             obj.differential = n_differential;
             obj.brake_system = n_brake_system;
-            obj.axles = n_axles;
             obj.controls = n_controls;
             obj.wheel_front = n_wheel_front;
             obj.wheel_rear = n_wheel_rear;
@@ -51,8 +50,9 @@ classdef Drivetrain2Axle_v2 < handle
                 rc_a = obj.clutch.r + obj.engine.fv_0;
                 Mc_a = -obj.engine.get_torque(obj.controls.gas_pedal, rads2rpm(th1_m));
             else % separately handle engine and clutch case
+                clutch_factor = obj.clutch.get_engaged_factor(obj.controls.clc_pedal);
                 Mc_a = -obj.clutch.kf*clutch_factor*(th1_m - th1_c);
-                th2_m = (-Mc_a - obj.engine.fv_0*th1_m) / obj.engine.Jm;
+                th2_m = (obj.engine.get_torque(obj.controls.gas_pedal, rads2rpm(th1_m)) +Mc_a - obj.engine.fv_0*th1_m) / obj.engine.Jm;
                 rc_a = obj.clutch.r;
                 Jc_a = obj.clutch.J;
             end
