@@ -46,7 +46,7 @@ diff_types = {'FWD free'; ... % 1
     '4WD free central, front locked, rear free'; ... % 11
     '4WD free central, front & rear locked'}; % 12
 
-th1_as = th1_v(1); th1_ad = th1_v(2); th1_ps = th1_v(3); th1_pd = th1_v(4);
+    th1_as = th1_v(1); th1_ad = th1_v(2); th1_ps = th1_v(3); th1_pd = th1_v(4);
 Mf_as = Mfv(1); Mf_ad = Mfv(2); Mf_ps = Mfv(3); Mf_pd = Mfv(4);
 Fx_as = Fxv(1); Fx_ad = Fxv(2); Fx_ps = Fxv(3); Fx_pd = Fxv(4);
 Jr_as = Jrv(1); Jr_ad = Jrv(2); Jr_ps = Jrv(3); Jr_pd = Jrv(4);
@@ -153,17 +153,55 @@ switch(diff_setup)
 end
 
 M = [M_hi; M_sub];
-u_sf = [u_sf_hi; u_sub];
-u_f = [u_f_hi; u_sub];
-u_cf = u_sf + u_f;
+u_f = [u_f_hi; zeros(4, 1)];
 if brake_check
-    x_sf = M \ u_sf;
-    ind2switch = find(th1_v == 0) + 1; % find locked wheels
-    
-    % At least one shaft is locked, check if it remains so...
-else
-    x = M \ u_cf;
+    tol_brk = 0.01; % max speed.
+    disc_status = abs(th1_v) < tol_brk;
+    lock_status = ~disc_status; % the unstopped ones are not to be investigated.
+    keep_checking = true;
+    smm = [zeros(2, 4); eye(4)];
+    M_ba = [M_hi, smm; ...
+        zeros(5, 5), eye(5), zeros(5, 4); ...
+        get_lock_subm()];
+    M_ba_c = M_ba; % current
+    % U_ba_c = U_ba; % current
+    Mfc = Mfv;
+    Mfc(disc_status) = Mfc(disc_status)*2;
+    while keep_checking
+        % Introduce known braking effect!
+        rows2excl = 2 + find(lock_status);
+        M_ba_c(rows2excl, :) = generate_lock_identities(lock_status);
+        u_sf_hi_c = u_sf_hi;
+        u_sf_hi_c(rows2excl) = u_sf_hi_c(rows2excl) - Mfc(lock_status);
+        u_sf = [u_sf_hi_c; zeros(4, 1)];
+        x_sf = M \ u_sf;
+        U_ba_c = [zeros(6, 1); -x_sf(6:10); zeros(3, 1)];
+        %U_ba_c(rows2excl) = Mfc(lock_status);
+        xf_p = M_ba_c \ U_ba_c;
+        Mfp_c = xf_p(11:14);
+        brk_trq_relation = Mfp_c <= Mfc;
+        if (all(lock_status) || all(brk_trq_relation))
+            keep_checking = false;
+            Mfp_c(lock_status) = Mfc(lock_status);
+            Mfe = Mfp_c;
+        else
+            lock_status(~brk_trq_relation) = true; % greater than limit braking torque - Not blocked
+        end
+        keyboard
+    end
+    % END WHILE
+    u_f = [0; ...
+    0; ...
+    -Mfe(1); ...
+    -Mfe(2); ...
+    -Mfe(3); ...
+    -Mfe(4); 
+    zeros(4, 1)];
 end
+u_sf = [u_sf_hi; u_sub];
+u_cf = u_sf + u_f;
+x = M \ u_cf;
+% end
 
 th2_v = x(7:10); %[th2_as; th2_ad; th2_ps; th2_pd];
 th2d = x(6);
@@ -174,13 +212,68 @@ Mdp = M_v(3) + M_v(4);
 
 
 
-    function Mlock = find_locking_torques(i2s)
-        [Mr, yr, xr] = recompose_linear_system(M, zeros(size(M, 1), 1), -x_sf, i2s);
-        
-        xx = Mr \ yr;
-        Mlock = xx(length(xx)-length(i2s)+1:end);
+    function subMl_known = generate_lock_identities(ls)
+        subMl_nw = [zeros(4, 10), eye(4)];
+        ind_known = find(ls);
+        subMl_known = subMl_nw(ind_known, :);
     end
 
+    % Returns submatrix for brake-unlock conditions
+    % TODO: For locked diffs, consider case of unequal braking torque
+    % left/right
+    function subMl = get_lock_subm()
+        bap = (Mfv(1) + Mfv(2)) / (Mfv(3) + Mfv(4)); % brake ratio: front / rear
+        switch(diff_setup)
+            case 1 % FWD, free
+                subMl = [0, 1, -1, zeros(1, 11); ...
+                    0, 0, 0, 1, 0, zeros(1, 9); ...
+                    0, 0, 0, 0, 1, zeros(1, 9)]; % front torque repart.
+            case 2 % FWD, locked
+                subMl = [zeros(1, 10), 1, -1, 0, 0; ...
+                    0, 0, 0, 1, 0, zeros(1, 9); ...
+                    0, 0, 0, 0, 1, zeros(1, 9)]; % front braking forces equal; no rear applied torque.
+            case 3 % RWD, free
+                subMl = [0, 0, 0, 1, -1, zeros(1, 9); ...
+                    0, 1, 0, 0, 0, zeros(1, 9); ...
+                    0, 0, 1, 0, 0, zeros(1, 9)]; % rear torque repart.
+            case 4 % RWD, locked
+                subMl = [zeros(1, 10), 0, 0, -1, 1; ...
+                    0, 1, 0, 0, 0, zeros(1, 9); ...
+                    0, 0, 1, 0, 0, zeros(1, 9)]; % rear braking forces equal; no front applied torque.
+            case 5 % central locked diff, free front and rear
+                subMl = [0, 1, -1, 0, 0, zeros(1, 9); ...
+                    0, 0, 0, 1, -1, zeros(1, 9); ...
+                    zeros(1, 10), -1, -1, bap, bap]; % impose correct brake force distr.
+            case 6 % locked central diff, free front, locked rear
+                subMl = [0, 1, -1, 0, 0, zeros(1, 9); ...
+                    zeros(1, 10), 0, 0, 1, -1; ...
+                    zeros(1, 10), -1, -1, bap, bap]; % impose correct brake force distr and equal braking rear axle.
+            case 7 % locked central diff, free rear, locked front
+                subMl = [0, 0, 0, 1, -1, zeros(1, 9); ...
+                    zeros(1, 10), 1, -1, 0, 0; ...
+                    zeros(1, 10), -1, -1, bap, bap]; % impose correct brake force distr and equal braking front axle.
+            case 8 % all diffs locked
+                subMl = [zeros(1, 10), 0, 0, 1, -1; ...
+                    zeros(1, 10), 1, -1, 0, 0; ...
+                    zeros(1, 10), -1, -1, bap, bap]; % brake forces should respect static balancement.
+            case 9 % all diffs open
+                subMl = [0, 1, -1, 0, 0, zeros(1, 9); ...
+                    0, 0, 0, 1, -1, zeros(1, 9); ...
+                    ka, -1, -1, 0, 0, zeros(1, 9)]; % impose front torque distr.
+            case 10 % C open, A open, P locked
+                subMl = [0, 1, -1, 0, 0, zeros(1, 9); ...
+                    zeros(1, 10), 0, 0, 1, -1; ...
+                    ka, -1, -1, 0, 0, zeros(1, 9)]; 
+            case 11 % C open, A locked, P open
+                subMl = [0, 0, 0, 1, -1, zeros(1, 9); ...
+                    zeros(1, 10), 1, -1, 0, 0; ...
+                    ka, -1, -1, 0, 0, zeros(1, 9)]; 
+            case 12 % C open, A and P locked
+                subMl = [zeros(1, 10), 0, 0, 1, -1; ...
+                    zeros(1, 10), 1, -1, 0, 0; ...
+                    ka, -1, -1, 0, 0, zeros(1, 9)]; 
+        end
+    end
 
 
 
