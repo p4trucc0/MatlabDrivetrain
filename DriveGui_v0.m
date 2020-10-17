@@ -81,6 +81,12 @@ CtrlPanel_Gear = GaugeObj(CtrlPanel, 'Gear', [0 0 1 .25], 1, 0, 6);
 % CtrlPanel_Clutch.set_val(.75);
 
 
+% Left Panel, containing graph/scheme
+LeftPanel = uipanel('parent', MainFrame, 'units', 'norm', 'pos', [0 0 ...
+    Hsep1 1], 'BackgroundColor', PanelBackgroundColor);
+CarView = cardyn_scheme_2d(LeftPanel);
+keyboard
+
 % SettingsPanel - Contains buttons and functions for setting up the
 % simulation
 SettingsPanel = uipanel('parent', RightPanel, 'units', 'norm', 'pos', ...
