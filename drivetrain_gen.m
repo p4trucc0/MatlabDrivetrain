@@ -202,6 +202,7 @@ if brake_check
 end
 u_sf = [u_sf_hi; u_sub];
 u_cf = u_sf + u_f;
+add_param.Mfv = -u_f(3:6); % braking forces
 x = M \ u_cf;
 % end
 

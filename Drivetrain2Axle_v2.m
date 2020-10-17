@@ -35,7 +35,7 @@ classdef Drivetrain2Axle_v2 < handle
         % Returns shaft accelerations given shaft speeds (all independent
         % rotating parts in the vehicle).
         % Engine - Driveshaft - Front axle - Rear axle
-        function w1v = get_shaft_acc(obj, w0v, Fx_front, Fx_rear)
+        function [w1v, add_params] = get_shaft_acc(obj, w0v, Fx_front, Fx_rear)
             th1_m = w0v(1); % engine speed
             th1_c = w0v(2); % clutch speed
             th1_f = w0v(3); % speed of front wheel
@@ -59,31 +59,37 @@ classdef Drivetrain2Axle_v2 < handle
             th1_d = th1_c / t;
             th1_v = [th1_f; th1_f; th1_r; th1_r];
             [M_brk_max_front_abs, M_brk_max_rear_abs] = obj.brake_system.get_brake_torques();
+            chb = false;
             if abs(th1_f) > obj.brake_speed_tol
                 M_brk_max_front = M_brk_max_front_abs * (sign(th1_f)); % new convention: positive when braking.
             else
-                M_brk_max_front = 2*M_brk_max_front_abs;
+                M_brk_max_front = M_brk_max_front_abs;
+                chb = true;
             end
             if abs(th1_r) > obj.brake_speed_tol
                 M_brk_max_rear  = M_brk_max_rear_abs * (sign(th1_r));
             else
-                M_brk_max_rear = 2*M_brk_max_rear_abs;
+                M_brk_max_rear = M_brk_max_rear_abs;
+                chb = true;
             end
             Mfv = [M_brk_max_front/2; M_brk_max_front/2; M_brk_max_rear/2; M_brk_max_rear/2];
             Fxv = [Fx_front/2; Fx_front/2; Fx_rear/2; Fx_rear/2];
             Jrv = [obj.wheel_front.J/2; obj.wheel_front.J/2; obj.wheel_rear.J/2; obj.wheel_rear.J/2];
             Rv = [obj.wheel_front.R; obj.wheel_front.R; obj.wheel_rear.R; obj.wheel_rear.R];
-            [th2_v, th2d, M_v, Md, Mda, Mdp, add_param] = drivetrain_fun(obj.differential.type, ...
+            [th2_v, th2d, M_v, Md, Mda, Mdp, add_param] = drivetrain_gen(obj.differential.type, ...
                 th1_v, th1_d, Mc_a, Mfv, Fxv, Jc_a, Jrv, rc_a, obj.differential.r, t, ...
                 obj.differential.torque_distribution(1), obj.differential.torque_distribution(2), ...
-                Rv);
-            % HANDLE LOCKED CASE
-            % Reverting to paper.
-            % Give output
+                Rv, chb);
             if clutch_is_engaged
                 th2_m = t*th2d;
             end % else already calculated
             w1v = [th2_m; t*th2d; th2_v(1); th2_v(3)];
+            add_params = struct();
+            add_params.M_v = M_v;
+            add_params.Md = Md;
+            add_params.Mda = Mda;
+            add_params.Mdp = Mdp;
+            add_params.Mb = add_param.Mfv;
         end
         
     end
