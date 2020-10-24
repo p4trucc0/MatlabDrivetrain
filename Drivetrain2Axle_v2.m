@@ -90,6 +90,14 @@ classdef Drivetrain2Axle_v2 < handle
             add_params.Mda = Mda;
             add_params.Mdp = Mdp;
             add_params.Mb = add_param.Mfv;
+            add_params.w_diff = add_param.th1d;
+            add_params.w_clutch = t*add_params.w_diff;
+            add_params.ClutchTorque = -Mc_a;
+            add_params.EngineTorque = obj.engine.get_torque(obj.controls.gas_pedal, rads2rpm(th1_m));
+            add_params.WheelTorques = M_v;
+            add_params.DiffTorque = Md;
+            add_params.BrakeTorquesActual = add_param.Mfv;
+            add_params.BrakeTorquesTheor = Mfv;
         end
         
     end

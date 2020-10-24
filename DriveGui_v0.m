@@ -19,7 +19,7 @@ BufferedVals = CurrentVals;
 BufferedVals.N = 0;
 ValsToShow = CurrentVals;
 AutomationTrack = load('dummy_auto1.mat');
-SimulationDeltaTime = .01; %s
+SimulationDeltaTime = 1/120; %s
 DrawDeltaTime = 1/60; %s
 SimTime = 0.0;
 LastDrawTime = now;
@@ -99,7 +99,9 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
     'units','norm', 'position', [2/3 0 1/3 1/4], 'String', 'Start', ...
     'FontSize', SmallFont, 'Callback', @StartButtonCbck, ...
     'BackgroundColor', [.9 .9 .9]);
-
+f1 = fopen(OutputFileName, 'a');
+drawnow;
+simulateFromJoystick();
 
     function change_op_mode(obj, event)
         OperatingMode = get(obj, 'Value');
@@ -129,6 +131,7 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
                     CurrentVals.w_wheel_front; CurrentVals.w_wheel_rear; ...
                     CurrentVals.v_body];
                 [av, a_params] = Car.get_acc(cvals);
+                cvals(2) = a_params.w_clutch; % re-correct for locking
                 avi = integrate_cgs(cvals, av, SimulationDeltaTime);
                 % If writing, do it here.
                 CurrentVals.w_engine = avi(1);
@@ -177,8 +180,8 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
 
     function simulateFromJoystick
         j = HebiJoystick(1);
-        f1 = fopen(OutputFileName, 'a');
-        fprintf(f1, 't,clc_p,acc_p,brk_p,gear,w_engine,w_wheel,v_body\n');
+        fprintf(f1, 'T,t,clc_p,acc_p,brk_p,gear,w_engine,w_clutch,w_wheel_f,w_wheel_r,v_body,Fz_front,Fz_rear,Fx_front,Fx_rear,distance\n');
+        %fclose(f1);
         exitCondition = 0;
         LastDrawTime = now;
         SimTime = 0.0;
@@ -216,6 +219,7 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
                     CurrentVals.w_wheel_front; CurrentVals.w_wheel_rear; ...
                     CurrentVals.v_body];
                 [av, a_params] = Car.get_acc(cvals);
+                cvals(2) = a_params.w_clutch; % re-correct for locking
                 avi = integrate_cgs(cvals, av, SimulationDeltaTime);
                 % If writing, do it here.
                 CurrentVals.w_engine = avi(1);
@@ -255,12 +259,12 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
             LastDrawTime = LastDrawTime + DrawDeltaTime/(24*3600);
             %LastDrawSimTime = SimTime;
         end
-        fclose(f1);
+        %fclose(f1);
     end
 
     function updateView()
         ValsToShow.w_engine = BufferedVals.w_engine / BufferedVals.N;
-        ValsToShow.w_clutch = BufferedVals.w_engine / BufferedVals.N;
+        ValsToShow.w_clutch = BufferedVals.w_clutch / BufferedVals.N;
         ValsToShow.w_wheel_rear = BufferedVals.w_wheel_rear / BufferedVals.N;
         ValsToShow.w_wheel_front = BufferedVals.w_wheel_front / BufferedVals.N;
         ValsToShow.v_body = BufferedVals.v_body / BufferedVals.N;
@@ -288,6 +292,25 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
         CarView.Fx_rear = ValsToShow.Fx_rear;
         CarView.Fz_rear = ValsToShow.Fz_rear;
         CarView.update_all();
+        %f1 = fopen(OutputFileName, 'a');
+        str2print = [datestr(now, 'HH:MM:SS.FFF'), ',' num2str(SimTime), ...
+            ',', num2str(Car.drivetrain.controls.clc_pedal), ...
+            ',', num2str(Car.drivetrain.controls.gas_pedal), ...
+            ',', num2str(Car.drivetrain.controls.brk_pedal), ...
+            ',', num2str(Car.drivetrain.controls.gear_lever), ...
+            ',', num2str(ValsToShow.w_engine), ...
+            ',', num2str(ValsToShow.w_clutch), ...
+            ',', num2str(ValsToShow.w_wheel_front), ...
+            ',', num2str(ValsToShow.w_wheel_rear), ...
+            ',', num2str(ValsToShow.v_body), ...
+            ',', num2str(ValsToShow.Fz_front), ...
+            ',', num2str(ValsToShow.Fz_rear), ...
+            ',', num2str(ValsToShow.Fx_front), ...
+            ',', num2str(ValsToShow.Fx_rear), ...
+            ',', num2str(ValsToShow.x_body), '\n'];
+        % fprintf(f1, 'T,t,clc_p,acc_p,brk_p,gear,w_engine,w_clutch,w_wheel_f,w_wheel_r,v_body,Fz_front,Fz_rear,Fx_front,Fx_rear,distance\n');
+        fprintf(f1, str2print);
+        %fclose(f1);
         resetBuffer();
     end
 

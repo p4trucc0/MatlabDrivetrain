@@ -29,7 +29,6 @@ function [th2_v, th2d, M_v, Md, Mda, Mdp, add_param] = drivetrain_fun(diff_setup
 % Mdp: Rear torque applied by the differential
 % add_param: additional parameters
 
-CHECK_DIFF_SPEED = true; % Manually correct input diff speed to account for integration quirks
 
 % Input parsing
 diff_types = {'FWD free'; ... % 1
