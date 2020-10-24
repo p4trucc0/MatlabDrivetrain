@@ -13,13 +13,14 @@ SmallFont = 10;
 OperatingMode = 1; % 1: automation; 2: live (joypad)
 CurrentVals = struct('w_engine', rpm2rads(4000), 'v_body', 0, ...
     'w_wheel_front', 0, 'w_wheel_rear', 0, 'Fx_front', 0, ...
-    'Fx_rear', 0, 'Fz_front', 0, 'Fz_rear', 0, 'w_clutch', 0);
+    'Fx_rear', 0, 'Fz_front', 0, 'Fz_rear', 0, 'w_clutch', 0, 'x_body', 0, ...
+    'th_wheel_front', 0, 'th_wheel_rear', 0);
 BufferedVals = CurrentVals;
 BufferedVals.N = 0;
 ValsToShow = CurrentVals;
 AutomationTrack = load('dummy_auto1.mat');
 SimulationDeltaTime = .01; %s
-DrawDeltaTime = 1/10; %s
+DrawDeltaTime = 1/60; %s
 SimTime = 0.0;
 LastDrawTime = now;
 LastDrawSimTime = -1;
@@ -85,7 +86,7 @@ CtrlPanel_Gear = GaugeObj(CtrlPanel, 'Gear', [0 0 1 .25], 1, 0, 6);
 LeftPanel = uipanel('parent', MainFrame, 'units', 'norm', 'pos', [0 0 ...
     Hsep1 1], 'BackgroundColor', PanelBackgroundColor);
 CarView = cardyn_scheme_2d(LeftPanel);
-keyboard
+%keyboard
 
 % SettingsPanel - Contains buttons and functions for setting up the
 % simulation
@@ -135,12 +136,26 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
                 CurrentVals.w_wheel_front = avi(3);
                 CurrentVals.w_wheel_rear = avi(4);
                 CurrentVals.v_body = avi(5);
+                CurrentVals.x_body = CurrentVals.x_body + SimulationDeltaTime*CurrentVals.v_body;
+                CurrentVals.th_wheel_front = CurrentVals.th_wheel_front + SimulationDeltaTime*CurrentVals.w_wheel_front;
+                CurrentVals.th_wheel_rear = CurrentVals.th_wheel_rear + SimulationDeltaTime*CurrentVals.w_wheel_rear;
+                CurrentVals.Fx_front = a_params.Fx_a;
+                CurrentVals.Fz_front = a_params.Fz_a;
+                CurrentVals.Fx_rear = a_params.Fx_p;
+                CurrentVals.Fz_rear = a_params.Fz_p;
                 SimTime = SimTime + SimulationDeltaTime;
                 BufferedVals.w_engine = BufferedVals.w_engine + CurrentVals.w_engine;
                 BufferedVals.w_clutch = BufferedVals.w_clutch + CurrentVals.w_clutch;
                 BufferedVals.w_wheel_front = BufferedVals.w_wheel_front + CurrentVals.w_wheel_front;
                 BufferedVals.w_wheel_rear = BufferedVals.w_wheel_rear + CurrentVals.w_wheel_rear;
                 BufferedVals.v_body = BufferedVals.v_body + CurrentVals.v_body;
+                BufferedVals.x_body = BufferedVals.x_body + CurrentVals.x_body;
+                BufferedVals.th_wheel_front = BufferedVals.th_wheel_front + CurrentVals.th_wheel_front;
+                BufferedVals.th_wheel_rear = BufferedVals.th_wheel_rear + CurrentVals.th_wheel_rear;
+                BufferedVals.Fx_front = BufferedVals.Fx_front + CurrentVals.Fx_front;
+                BufferedVals.Fz_front = BufferedVals.Fz_front + CurrentVals.Fz_front;
+                BufferedVals.Fx_rear = BufferedVals.Fx_rear + CurrentVals.Fx_rear;
+                BufferedVals.Fz_rear = BufferedVals.Fz_rear + CurrentVals.Fz_rear;
                 BufferedVals.N = BufferedVals.N + 1;
                 if (SimTime - LastDrawSimTime > DrawDeltaTime)
                     while (now - LastDrawTime < DrawDeltaTime/(24*3600))
@@ -227,6 +242,13 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
         ValsToShow.w_wheel_rear = BufferedVals.w_wheel_rear / BufferedVals.N;
         ValsToShow.w_wheel_front = BufferedVals.w_wheel_front / BufferedVals.N;
         ValsToShow.v_body = BufferedVals.v_body / BufferedVals.N;
+        ValsToShow.x_body = BufferedVals.x_body / BufferedVals.N;
+        ValsToShow.th_wheel_rear = BufferedVals.th_wheel_rear / BufferedVals.N;
+        ValsToShow.th_wheel_front = BufferedVals.th_wheel_front / BufferedVals.N;
+        ValsToShow.Fx_front = BufferedVals.Fx_front / BufferedVals.N;
+        ValsToShow.Fz_front = BufferedVals.Fz_front / BufferedVals.N;
+        ValsToShow.Fx_rear = BufferedVals.Fx_rear / BufferedVals.N;
+        ValsToShow.Fz_rear = BufferedVals.Fz_rear / BufferedVals.N;
         SpeedPanel_Speed_Body_Val.String = num2str(3.6*ValsToShow.v_body);
         SpeedPanel_Speed_Front_Val.String = num2str(3.6*ValsToShow.w_wheel_front*Car.wheel_front.R);
         SpeedPanel_Speed_Rear_Val.String = num2str(3.6*ValsToShow.w_wheel_rear*Car.wheel_rear.R);
@@ -236,6 +258,14 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
         CtrlPanel_Brk.set_val(Car.drivetrain.controls.brk_pedal);
         CtrlPanel_Clc.set_val(Car.drivetrain.controls.clc_pedal);
         CtrlPanel_Gear.set_val(Car.drivetrain.controls.gear_lever);
+        CarView.car_position = [ValsToShow.x_body*1000, 0];
+        CarView.wheel_front_th = ValsToShow.th_wheel_front;
+        CarView.wheel_rear_th = ValsToShow.th_wheel_rear;
+        CarView.Fx_front = ValsToShow.Fx_front;
+        CarView.Fz_front = ValsToShow.Fz_front;
+        CarView.Fx_rear = ValsToShow.Fx_rear;
+        CarView.Fz_rear = ValsToShow.Fz_rear;
+        CarView.update_all();
         resetBuffer();
     end
 
