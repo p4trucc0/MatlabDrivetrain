@@ -14,7 +14,10 @@ OperatingMode = 1; % 1: automation; 2: live (joypad)
 CurrentVals = struct('w_engine', rpm2rads(4000), 'v_body', 0, ...
     'w_wheel_front', 0, 'w_wheel_rear', 0, 'Fx_front', 0, ...
     'Fx_rear', 0, 'Fz_front', 0, 'Fz_rear', 0, 'w_clutch', 0, 'x_body', 0, ...
-    'th_wheel_front', 0, 'th_wheel_rear', 0);
+    'th_wheel_front', 0, 'th_wheel_rear', 0, ...
+    'ClutchTorque', 0, 'EngineTorque', 0, 'WheelTorques', [0 0 0 0], ...
+    'DiffTorque', 0, 'BrakeTorquesActual', [0 0 0 0], ...
+    'BrakeTorquesTheor', [0 0 0 0]);
 BufferedVals = CurrentVals;
 BufferedVals.N = 0;
 ValsToShow = CurrentVals;
@@ -100,8 +103,8 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
     'FontSize', SmallFont, 'Callback', @StartButtonCbck, ...
     'BackgroundColor', [.9 .9 .9]);
 f1 = fopen(OutputFileName, 'a');
-drawnow;
-simulateFromJoystick();
+% drawnow;
+% simulateFromJoystick();
 
     function change_op_mode(obj, event)
         OperatingMode = get(obj, 'Value');
@@ -147,19 +150,7 @@ simulateFromJoystick();
                 CurrentVals.Fx_rear = a_params.Fx_p;
                 CurrentVals.Fz_rear = a_params.Fz_p;
                 SimTime = SimTime + SimulationDeltaTime;
-                BufferedVals.w_engine = BufferedVals.w_engine + CurrentVals.w_engine;
-                BufferedVals.w_clutch = BufferedVals.w_clutch + CurrentVals.w_clutch;
-                BufferedVals.w_wheel_front = BufferedVals.w_wheel_front + CurrentVals.w_wheel_front;
-                BufferedVals.w_wheel_rear = BufferedVals.w_wheel_rear + CurrentVals.w_wheel_rear;
-                BufferedVals.v_body = BufferedVals.v_body + CurrentVals.v_body;
-                BufferedVals.x_body = BufferedVals.x_body + CurrentVals.x_body;
-                BufferedVals.th_wheel_front = BufferedVals.th_wheel_front + CurrentVals.th_wheel_front;
-                BufferedVals.th_wheel_rear = BufferedVals.th_wheel_rear + CurrentVals.th_wheel_rear;
-                BufferedVals.Fx_front = BufferedVals.Fx_front + CurrentVals.Fx_front;
-                BufferedVals.Fz_front = BufferedVals.Fz_front + CurrentVals.Fz_front;
-                BufferedVals.Fx_rear = BufferedVals.Fx_rear + CurrentVals.Fx_rear;
-                BufferedVals.Fz_rear = BufferedVals.Fz_rear + CurrentVals.Fz_rear;
-                BufferedVals.N = BufferedVals.N + 1;
+                updateBuffer();
                 if (SimTime - LastDrawSimTime > DrawDeltaTime)
                     while (now - LastDrawTime < DrawDeltaTime/(24*3600))
                         pause(.001);
@@ -235,19 +226,7 @@ simulateFromJoystick();
                 CurrentVals.Fx_rear = a_params.Fx_p;
                 CurrentVals.Fz_rear = a_params.Fz_p;
                 SimTime = SimTime + SimulationDeltaTime;
-                BufferedVals.w_engine = BufferedVals.w_engine + CurrentVals.w_engine;
-                BufferedVals.w_clutch = BufferedVals.w_clutch + CurrentVals.w_clutch;
-                BufferedVals.w_wheel_front = BufferedVals.w_wheel_front + CurrentVals.w_wheel_front;
-                BufferedVals.w_wheel_rear = BufferedVals.w_wheel_rear + CurrentVals.w_wheel_rear;
-                BufferedVals.v_body = BufferedVals.v_body + CurrentVals.v_body;
-                BufferedVals.x_body = BufferedVals.x_body + CurrentVals.x_body;
-                BufferedVals.th_wheel_front = BufferedVals.th_wheel_front + CurrentVals.th_wheel_front;
-                BufferedVals.th_wheel_rear = BufferedVals.th_wheel_rear + CurrentVals.th_wheel_rear;
-                BufferedVals.Fx_front = BufferedVals.Fx_front + CurrentVals.Fx_front;
-                BufferedVals.Fz_front = BufferedVals.Fz_front + CurrentVals.Fz_front;
-                BufferedVals.Fx_rear = BufferedVals.Fx_rear + CurrentVals.Fx_rear;
-                BufferedVals.Fz_rear = BufferedVals.Fz_rear + CurrentVals.Fz_rear;
-                BufferedVals.N = BufferedVals.N + 1;
+                updateBuffer();
             end
             fprintf('Computing time: %f\n', (now - LastDrawTime2)*24*3600);
             while (now - LastDrawTime < DrawDeltaTime/(24*3600))
@@ -263,18 +242,7 @@ simulateFromJoystick();
     end
 
     function updateView()
-        ValsToShow.w_engine = BufferedVals.w_engine / BufferedVals.N;
-        ValsToShow.w_clutch = BufferedVals.w_clutch / BufferedVals.N;
-        ValsToShow.w_wheel_rear = BufferedVals.w_wheel_rear / BufferedVals.N;
-        ValsToShow.w_wheel_front = BufferedVals.w_wheel_front / BufferedVals.N;
-        ValsToShow.v_body = BufferedVals.v_body / BufferedVals.N;
-        ValsToShow.x_body = BufferedVals.x_body / BufferedVals.N;
-        ValsToShow.th_wheel_rear = BufferedVals.th_wheel_rear / BufferedVals.N;
-        ValsToShow.th_wheel_front = BufferedVals.th_wheel_front / BufferedVals.N;
-        ValsToShow.Fx_front = BufferedVals.Fx_front / BufferedVals.N;
-        ValsToShow.Fz_front = BufferedVals.Fz_front / BufferedVals.N;
-        ValsToShow.Fx_rear = BufferedVals.Fx_rear / BufferedVals.N;
-        ValsToShow.Fz_rear = BufferedVals.Fz_rear / BufferedVals.N;
+        getValsToShow();
         SpeedPanel_Speed_Body_Val.String = num2str(3.6*ValsToShow.v_body);
         SpeedPanel_Speed_Front_Val.String = num2str(3.6*ValsToShow.w_wheel_front*Car.wheel_front.R);
         SpeedPanel_Speed_Rear_Val.String = num2str(3.6*ValsToShow.w_wheel_rear*Car.wheel_rear.R);
@@ -314,6 +282,20 @@ simulateFromJoystick();
         resetBuffer();
     end
 
+    function updateBuffer()
+        fnab = fieldnames(CurrentVals);
+        for i_f = 1:length(fnab)
+            BufferedVals.(fnab{i_f}) = BufferedVals.(fnab{i_f}) + CurrentVals.(fnab{i_f});
+        end
+        BufferedVals.N = BufferedVals.N + 1;
+    end
+
+    function getValsToShow()
+        fnab = fieldnames(CurrentVals);
+        for i_f = 1:length(fnab)
+            ValsToShow.(fnab{i_f}) = BufferedVals.(fnab{i_f})./ BufferedVals.N;
+        end
+    end
 
     function resetBuffer()
         fnab = fieldnames(BufferedVals);
