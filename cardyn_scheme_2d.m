@@ -64,8 +64,10 @@ classdef cardyn_scheme_2d < handle
             obj.wheel_front_lines(end).YData = [obj.wheel_front_z, obj.wheel_front_z + obj.wheel_radius*sin(-obj.wheel_front_th)];
             obj.wheel_rear_lines(end).XData = [obj.wheel_rear_x, obj.wheel_rear_x + obj.wheel_radius*cos(-obj.wheel_rear_th)];
             obj.wheel_rear_lines(end).YData = [obj.wheel_rear_z, obj.wheel_rear_z + obj.wheel_radius*sin(-obj.wheel_rear_th)];
+            xv = linspace(-obj.ax_limit, obj.ax_limit, obj.N_bg_lines + 1);
             for ii = 1:obj.N_bg_lines
-                obj.bg_lines(ii).XData = obj.bg_lines(ii).XData - obj.car_position(1);
+                % obj.bg_lines(ii).XData = obj.bg_lines(ii).XData - obj.car_position(1);
+                obj.bg_lines(ii).XData = (xv(ii) - obj.car_position(1))*ones(1, 2);
                 while (obj.bg_lines(ii).XData(1) < -obj.ax_limit)
                     obj.bg_lines(ii).XData = obj.bg_lines(ii).XData + 2*obj.ax_limit;
                 end

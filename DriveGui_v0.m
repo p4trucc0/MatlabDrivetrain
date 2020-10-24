@@ -212,16 +212,38 @@ SettingsPanel_start_button = uicontrol('parent', SettingsPanel, 'style','pushbut
             end
             Car.drivetrain.controls.set_all(acc_p, brk_p, clc_p, gear_p);
             for i_step = 1:IntermediateSteps % perform a chunk of integrations.
-                [av, ~] = Car.get_acc([CurrentVals.w_engine, CurrentVals.w_wheel, ...
-                    CurrentVals.v_body]);
+                cvals = [CurrentVals.w_engine; CurrentVals.w_clutch; ...
+                    CurrentVals.w_wheel_front; CurrentVals.w_wheel_rear; ...
+                    CurrentVals.v_body];
+                [av, a_params] = Car.get_acc(cvals);
+                avi = integrate_cgs(cvals, av, SimulationDeltaTime);
                 % If writing, do it here.
-                CurrentVals.w_engine = CurrentVals.w_engine + av(1)*SimulationDeltaTime;
-                CurrentVals.w_wheel = CurrentVals.w_wheel + av(2)*SimulationDeltaTime;
-                CurrentVals.v_body = CurrentVals.v_body + av(3)*SimulationDeltaTime;
+                CurrentVals.w_engine = avi(1);
+                CurrentVals.w_clutch = avi(2);
+                CurrentVals.w_wheel_front = avi(3);
+                CurrentVals.w_wheel_rear = avi(4);
+                CurrentVals.v_body = avi(5);
+                CurrentVals.x_body = CurrentVals.x_body + SimulationDeltaTime*CurrentVals.v_body;
+                CurrentVals.th_wheel_front = CurrentVals.th_wheel_front + SimulationDeltaTime*CurrentVals.w_wheel_front;
+                CurrentVals.th_wheel_rear = CurrentVals.th_wheel_rear + SimulationDeltaTime*CurrentVals.w_wheel_rear;
+                CurrentVals.Fx_front = a_params.Fx_a;
+                CurrentVals.Fz_front = a_params.Fz_a;
+                CurrentVals.Fx_rear = a_params.Fx_p;
+                CurrentVals.Fz_rear = a_params.Fz_p;
                 SimTime = SimTime + SimulationDeltaTime;
-                fprintf(f1, '%f,%f,%f,%f,%f,%f,%f,%f\n', SimTime, clc_p, acc_p, brk_p, ...
-                    gear_p, CurrentVals.w_engine, CurrentVals.w_wheel, ...
-                    CurrentVals.v_body);
+                BufferedVals.w_engine = BufferedVals.w_engine + CurrentVals.w_engine;
+                BufferedVals.w_clutch = BufferedVals.w_clutch + CurrentVals.w_clutch;
+                BufferedVals.w_wheel_front = BufferedVals.w_wheel_front + CurrentVals.w_wheel_front;
+                BufferedVals.w_wheel_rear = BufferedVals.w_wheel_rear + CurrentVals.w_wheel_rear;
+                BufferedVals.v_body = BufferedVals.v_body + CurrentVals.v_body;
+                BufferedVals.x_body = BufferedVals.x_body + CurrentVals.x_body;
+                BufferedVals.th_wheel_front = BufferedVals.th_wheel_front + CurrentVals.th_wheel_front;
+                BufferedVals.th_wheel_rear = BufferedVals.th_wheel_rear + CurrentVals.th_wheel_rear;
+                BufferedVals.Fx_front = BufferedVals.Fx_front + CurrentVals.Fx_front;
+                BufferedVals.Fz_front = BufferedVals.Fz_front + CurrentVals.Fz_front;
+                BufferedVals.Fx_rear = BufferedVals.Fx_rear + CurrentVals.Fx_rear;
+                BufferedVals.Fz_rear = BufferedVals.Fz_rear + CurrentVals.Fz_rear;
+                BufferedVals.N = BufferedVals.N + 1;
             end
             fprintf('Computing time: %f\n', (now - LastDrawTime2)*24*3600);
             while (now - LastDrawTime < DrawDeltaTime/(24*3600))
