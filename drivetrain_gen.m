@@ -207,7 +207,8 @@ if brake_check
     % U_ba_c = U_ba; % current
     u_sf = [u_sf_hi; zeros(4, 1)];
     x_sf = M \ u_sf;
-    Mfc = abs(Mfv).*-sign(x_sf(7:10));
+    %Mfc = abs(Mfv).*-sign(x_sf(7:10));
+    Mfc = Mfv;
     Mfc(disc_status) = Mfc(disc_status)*2;
     while keep_checking
         % Introduce known braking effect!
