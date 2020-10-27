@@ -50,9 +50,9 @@ classdef Drivetrain2Axle_v2 < handle
                 rc_a = obj.clutch.r + obj.engine.fv_0;
                 Mc_a = -obj.engine.get_torque(obj.controls.gas_pedal, rads2rpm(th1_m));
             else % separately handle engine and clutch case
-                clutch_factor = obj.clutch.get_engaged_factor(obj.controls.clc_pedal);
-                % Mc_a = -obj.clutch.kf*clutch_factor*(th1_m - th1_c);
-                Mc_a = -obj.clutch.kf*clutch_factor*sign(th1_m - th1_c);
+                %clutch_factor = obj.clutch.get_engaged_factor(obj.controls.clc_pedal);
+                %Mc_a = -obj.clutch.kf*clutch_factor*sign(th1_m - th1_c);
+                Mc_a = obj.clutch.get_torque(th1_m, th1_c, obj.controls.clc_pedal);
                 th2_m = (obj.engine.get_torque(obj.controls.gas_pedal, rads2rpm(th1_m)) +Mc_a - obj.engine.fv_0*th1_m) / obj.engine.Jm;
                 rc_a = obj.clutch.r;
                 Jc_a = obj.clutch.J;
@@ -99,6 +99,7 @@ classdef Drivetrain2Axle_v2 < handle
             add_params.DiffTorque = Md;
             add_params.BrakeTorquesActual = add_param.Mfv;
             add_params.BrakeTorquesTheor = Mfv;
+            add_params.ClutchEngaged = clutch_is_engaged;
         end
         
     end

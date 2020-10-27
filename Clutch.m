@@ -49,9 +49,14 @@ classdef Clutch < handle
             end
         end
         
+        % Get transmitted torque - it makes more sense here than into
+        % drivetrain function.
+        % TODO: Implement more complex curves (this might result into
+        % numerical instability!)
+        function Mc = get_torque(obj, w_m, w_c, pedal_pos)
+            Mc = obj.kf*obj.get_engaged_factor(pedal_pos)*sign(w_c - w_m);
+        end
         
-        % function tt = get_transmitted_torque(obj, cp_pos)
-        % end
         
     end
     

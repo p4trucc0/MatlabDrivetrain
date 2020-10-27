@@ -17,7 +17,7 @@ CurrentVals = struct('w_engine', rpm2rads(4000), 'v_body', 0, ...
     'th_wheel_front', 0, 'th_wheel_rear', 0, ...
     'ClutchTorque', 0, 'EngineTorque', 0, 'WheelTorques', [0 0 0 0], ...
     'DiffTorque', 0, 'BrakeTorquesActual', [0 0 0 0], ...
-    'BrakeTorquesTheor', [0 0 0 0]);
+    'BrakeTorquesTheor', [0 0 0 0], 'ClutchEngaged', 0);
 BufferedVals = CurrentVals;
 BufferedVals.N = 0;
 ValsToShow = CurrentVals;
@@ -27,7 +27,7 @@ DrawDeltaTime = 1/60; %s
 SimTime = 0.0;
 LastDrawTime = now;
 LastDrawSimTime = -1;
-OutputFileName = ['debug_', datestr(now, 'yyyy_mm_dd_HH_MM_SS'), '.txt'];
+OutputFileName = ['logs\debug_', datestr(now, 'yyyy_mm_dd_HH_MM_SS'), '.txt'];
 
 % Global objects (such as drivetrain, etc)
 % TODO: define function to load and save a car's properties
@@ -171,7 +171,9 @@ f1 = fopen(OutputFileName, 'a');
 
     function simulateFromJoystick
         j = HebiJoystick(1);
-        fprintf(f1, 'T,t,clc_p,acc_p,brk_p,gear,w_engine,w_clutch,w_wheel_f,w_wheel_r,v_body,Fz_front,Fz_rear,Fx_front,Fx_rear,distance\n');
+        fprintf(f1, 'T,t,clc_p,acc_p,brk_p,gear,w_engine,w_clutch,w_wheel_f,w_wheel_r,v_body,Fz_front,Fz_rear,Fx_front,Fx_rear,distance,M_clutch,M_engine,M_wheel_fl,'); 
+        fprintf(f1, 'M_wheel_fr,M_wheel_rl,M_wheel_rr,M_diff,M_brake_act_fl,M_brake_act_fr,M_brake_act_rl,M_brake_act_rr,M_brake_th_fl,M_brake_th_fr,M_brake_th_rl,');
+        fprintf(f1, 'M_brake_th_rr,clutch_engaged\n');
         %fclose(f1);
         exitCondition = 0;
         LastDrawTime = now;
@@ -196,7 +198,11 @@ f1 = fopen(OutputFileName, 'a');
                     LastGearChange = SimTime;
                 end
             end
-            clc_p = abs(ax(2)); % use left handle as clutch.
+            if abs(ax(2)) < .5 % Dead zone.
+                clc_p = 0.0;
+            else
+                clc_p = 2*(abs(ax(2))-.5); % use left handle as clutch.
+            end
             if ax(3) < .05
                 acc_p = abs(ax(3));
                 brk_p = 0;
@@ -225,6 +231,13 @@ f1 = fopen(OutputFileName, 'a');
                 CurrentVals.Fz_front = a_params.Fz_a;
                 CurrentVals.Fx_rear = a_params.Fx_p;
                 CurrentVals.Fz_rear = a_params.Fz_p;
+                CurrentVals.ClutchTorque = a_params.ClutchTorque;
+                CurrentVals.EngineTorque = a_params.EngineTorque;
+                CurrentVals.WheelTorques = a_params.WheelTorques;
+                CurrentVals.DiffTorque = a_params.DiffTorque;
+                CurrentVals.BrakeTorquesActual = a_params.BrakeTorquesActual;
+                CurrentVals.BrakeTorquesTheor = a_params.BrakeTorquesTheor;
+                CurrentVals.ClutchEngaged = a_params.ClutchEngaged;
                 SimTime = SimTime + SimulationDeltaTime;
                 updateBuffer();
             end
@@ -275,8 +288,26 @@ f1 = fopen(OutputFileName, 'a');
             ',', num2str(ValsToShow.Fz_rear), ...
             ',', num2str(ValsToShow.Fx_front), ...
             ',', num2str(ValsToShow.Fx_rear), ...
-            ',', num2str(ValsToShow.x_body), '\n'];
-        % fprintf(f1, 'T,t,clc_p,acc_p,brk_p,gear,w_engine,w_clutch,w_wheel_f,w_wheel_r,v_body,Fz_front,Fz_rear,Fx_front,Fx_rear,distance\n');
+            ',', num2str(ValsToShow.x_body), ...
+            ',', num2str(ValsToShow.ClutchTorque), ...
+            ',', num2str(ValsToShow.EngineTorque), ...
+            ',', num2str(ValsToShow.WheelTorques(1)), ...
+            ',', num2str(ValsToShow.WheelTorques(2)), ...
+            ',', num2str(ValsToShow.WheelTorques(3)), ...
+            ',', num2str(ValsToShow.WheelTorques(4)), ...
+            ',', num2str(ValsToShow.DiffTorque), ...
+            ',', num2str(ValsToShow.BrakeTorquesActual(1)), ...
+            ',', num2str(ValsToShow.BrakeTorquesActual(2)), ...
+            ',', num2str(ValsToShow.BrakeTorquesActual(3)), ...
+            ',', num2str(ValsToShow.BrakeTorquesActual(4)), ...
+            ',', num2str(ValsToShow.BrakeTorquesTheor(1)), ...
+            ',', num2str(ValsToShow.BrakeTorquesTheor(2)), ...
+            ',', num2str(ValsToShow.BrakeTorquesTheor(3)), ...
+            ',', num2str(ValsToShow.BrakeTorquesTheor(4)), ...
+            ',', num2str(ValsToShow.ClutchEngaged), ...
+            '\n'];
+        %fprintf(f1, 'T,t,clc_p,acc_p,brk_p,gear,w_engine,w_clutch,w_wheel_f,w_wheel_r,v_body,Fz_front,Fz_rear,Fx_front,Fx_rear,distance,M_clutch,M_engine,M_wheel_fl'); 
+        %fprintf(f1, 'M_wheel_fr,M_wheel_rl,M_wheel_rr,M_diff,M_brake_act_fl,M_brake_act_fr,M_brake_act_rl,M_brake_act_rr,M_brake_th_fl,M_brake_th_fr,M_brake_th_rl,M_brake_th_rr\n');
         fprintf(f1, str2print);
         %fclose(f1);
         resetBuffer();
