@@ -13,7 +13,7 @@ nfv0 = 0.005;
 nfv1 = 1e-7;
 
 m = Engine(nlambda_v, nrpm_v, ntorque_map, nfv0, nfv1, nJm);
-f = Clutch(100.0, 1.0, 0.005);
+f = Clutch(100.0, 0.0, 0.005);
 c = Gearbox([-15.0 3.8 2.235 1.36 0.971 0.763], [.9 .95 .98 .99 .99 .99], true);
 d = Differential2Axle_v2(3.562, [.5 .5], 2, 0.0);
 b_f = Brake(0.3, .07, .11, pi/4, 60000);
