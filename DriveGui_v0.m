@@ -33,6 +33,7 @@ OutputFileName = ['logs\debug_', datestr(now, 'yyyy_mm_dd_HH_MM_SS'), '.txt'];
 % TODO: define function to load and save a car's properties
 Car = generate_dummy_car_2ax();
 Car.dt = SimulationDeltaTime;
+av = zeros(5, 1);
 
 
 % Graphical build.
@@ -133,7 +134,7 @@ f1 = fopen(OutputFileName, 'a');
                 cvals = [CurrentVals.w_engine; CurrentVals.w_clutch; ...
                     CurrentVals.w_wheel_front; CurrentVals.w_wheel_rear; ...
                     CurrentVals.v_body];
-                [av, a_params] = Car.get_acc(cvals);
+                [av, a_params] = Car.get_acc(cvals, av);
                 cvals(2) = a_params.w_clutch; % re-correct for locking
                 avi = integrate_cgs(cvals, av, SimulationDeltaTime);
                 % If writing, do it here.
@@ -215,7 +216,7 @@ f1 = fopen(OutputFileName, 'a');
                 cvals = [CurrentVals.w_engine; CurrentVals.w_clutch; ...
                     CurrentVals.w_wheel_front; CurrentVals.w_wheel_rear; ...
                     CurrentVals.v_body];
-                [av, a_params] = Car.get_acc(cvals);
+                [av, a_params] = Car.get_acc(cvals, av);
                 cvals(2) = a_params.w_clutch; % re-correct for locking
                 avi = integrate_cgs(cvals, av, SimulationDeltaTime);
                 % If writing, do it here.
