@@ -28,6 +28,7 @@ SimTime = 0.0;
 LastDrawTime = now;
 LastDrawSimTime = -1;
 OutputFileName = ['logs\debug_', datestr(now, 'yyyy_mm_dd_HH_MM_SS'), '.txt'];
+SteeringWheel = false; % a steering wheel is connected.
 
 % Global objects (such as drivetrain, etc)
 % TODO: define function to load and save a car's properties
@@ -172,6 +173,10 @@ f1 = fopen(OutputFileName, 'a');
 
     function simulateFromJoystick
         j = HebiJoystick(1);
+        if strcmp(j.Name, 'SideWinder Force Feedback Wheel (USB)')
+            SteeringWheel = true;
+            disp('Recognized steering wheel.');
+        end
         fprintf(f1, 'T,t,clc_p,acc_p,brk_p,gear,w_engine,w_clutch,w_wheel_f,w_wheel_r,v_body,Fz_front,Fz_rear,Fx_front,Fx_rear,distance,M_clutch,M_engine,M_wheel_fl,'); 
         fprintf(f1, 'M_wheel_fr,M_wheel_rl,M_wheel_rr,M_diff,M_brake_act_fl,M_brake_act_fr,M_brake_act_rl,M_brake_act_rr,M_brake_th_fl,M_brake_th_fr,M_brake_th_rl,');
         fprintf(f1, 'M_brake_th_rr,clutch_engaged\n');
@@ -186,6 +191,7 @@ f1 = fopen(OutputFileName, 'a');
         while exitCondition == 0
             b = j.button;
             ax = j.read;
+            if ~SteeringWheel
             if b(1) == 1 % first button pressed
                 exitCondition = 1;
                 break;
@@ -210,6 +216,45 @@ f1 = fopen(OutputFileName, 'a');
             else
                 brk_p = abs(ax(3));
                 acc_p = 0;
+            end
+            else % Steering Wheel
+                if b(1) == 1
+                    exitCondition = 1;
+                    break;
+                end
+                if (SimTime - LastGearChange > 0.2) % TODO: Move this hardcoded thing from here
+                    if b(7) == 1
+                        gear_p = gear_p - 1;
+                        LastGearChange = SimTime;
+                    elseif b(8) == 1
+                        gear_p = gear_p + 1;
+                        LastGearChange = SimTime;
+                    end
+                end
+                acc_pedal = -.5*ax(2) + .5;
+                brk_pedal = -.5*ax(3) + .5;
+                if (acc_pedal < 0.2)
+                    acp1 = 0.0;
+                else
+                    acp1 = (acc_pedal - .2)/.8;
+                end
+                if (brk_pedal < 0.2)
+                    brp1 = 0.0;
+                else
+                    brp1 = (brk_pedal - .2)/.8;
+                end
+                if (b(3) == 1) % brake as clutch
+                    brk_p = 0.0;
+                    clc_p = brp1;
+                else
+                    if (b(4) == 1)
+                        clc_p = 1.0;
+                    else
+                        clc_p = 0.0;
+                    end
+                    brk_p = brp1;
+                end
+                acc_p = acp1;
             end
             Car.drivetrain.controls.set_all(acc_p, brk_p, clc_p, gear_p);
             for i_step = 1:IntermediateSteps % perform a chunk of integrations.
