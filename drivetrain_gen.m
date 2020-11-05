@@ -210,19 +210,28 @@ if brake_check
     %Mfc = abs(Mfv).*-sign(x_sf(7:10));
     Mfc = Mfv;
     Mfc(disc_status) = Mfc(disc_status)*2;
+    checkno = 0;
     while keep_checking
         % Introduce known braking effect!
+        if (~all(lock_status))
         rows2excl = 2 + find(lock_status);
-        M_ba_c(4+rows2excl, :) = generate_lock_identities(lock_status);
+        M_ba = [M_hi, smm; ...
+        zeros(4, 6), eye(4), zeros(4, 4); ...
+        get_lock_subm()];
+        M_ba_c = M_ba; % current
+        M_ba_c(4+rows2excl, :) = generate_lock_identities(lock_status); 
         u_sf_hi_c = u_sf_hi;
         u_sf_hi_c(rows2excl) = u_sf_hi_c(rows2excl) - Mfc(lock_status);
         u_sf = [u_sf_hi_c; zeros(4, 1)];
         x_sf = M \ u_sf;
         U_ba_c = [zeros(6, 1); -x_sf(7:10);  zeros(4, 1)];
         U_ba_c(4+rows2excl) = 0; %Mfc(lock_status);
+        %if abs(det(M_ba_c)) > tol_brk
         xf_p = M_ba_c \ U_ba_c;
+        %end % else: take previous values as good. They should not change (intuition)...
         Mfp_c = xf_p(11:14);
         brk_trq_relation = abs(Mfp_c) <= abs(Mfc);
+        end
         if all(lock_status | brk_trq_relation) %(all(lock_status) || all(brk_trq_relation))
             keep_checking = false;
             Mfp_c(lock_status) = Mfc(lock_status);
@@ -230,6 +239,7 @@ if brake_check
         else
             lock_status(~brk_trq_relation) = true; % greater than limit braking torque - Not blocked
         end
+        checkno = checkno + 1;
         %keyboard
     end
     % END WHILE
@@ -279,6 +289,9 @@ Mdp = M_v(3) + M_v(4);
                     zeros(1, 10), 1, -1, 0, 0; ...
                     0, 0, 0, 1, 0, zeros(1, 9); ...
                     0, 0, 0, 0, 1, zeros(1, 9)]; % front braking forces equal; no rear applied torque.
+                if any(lock_status(1:2))
+                    subMl(2,:) = [zeros(1, 5), 0, 1, -1, 0, 0, zeros(1, 4)];
+                end
             case 3 % RWD, free
                 subMl = [zeros(1, 5), 1, 0, 0, -.5, -.5, zeros(1, 4); ...
                     0, 0, 0, 1, -1, zeros(1, 9); ...
@@ -289,6 +302,9 @@ Mdp = M_v(3) + M_v(4);
                     zeros(1, 10), 0, 0, -1, 1; ...
                     0, 1, 0, 0, 0, zeros(1, 9); ...
                     0, 0, 1, 0, 0, zeros(1, 9)]; % rear braking forces equal; no front applied torque.
+                if any(lock_status(3:4))
+                    subMl(2,:) = [zeros(1, 5), 0, 0, 0, 1, -1, zeros(1, 4)];
+                end
             case 5 % central locked diff, free front and rear
                 subMl = [zeros(1, 5), 1, -.5, -.5, 0, 0, zeros(1, 4); ...
                     0, 1, -1, 0, 0, zeros(1, 9); ...
@@ -299,16 +315,28 @@ Mdp = M_v(3) + M_v(4);
                     0, 1, -1, 0, 0, zeros(1, 9); ...
                     zeros(1, 10), 0, 0, 1, -1; ...
                     zeros(1, 10), -1, -1, bap, bap]; % impose correct brake force distr and equal braking rear axle.
+                if any(lock_status(3:4))
+                    subMl(3,:) = [zeros(1, 5), 0, 0, 0, 1, -1, zeros(1, 4)];
+                end
             case 7 % locked central diff, free rear, locked front
                 subMl = [zeros(1, 5), 1, -1, 0, 0, 0, zeros(1, 4); ...
                     0, 0, 0, 1, -1, zeros(1, 9); ...
                     zeros(1, 10), 1, -1, 0, 0; ...
                     zeros(1, 10), -1, -1, bap, bap]; % impose correct brake force distr and equal braking front axle.
+                if any(lock_status(1:2))
+                    subMl(3,:) = [zeros(1, 5), 0, 1, -1, 0, 0, zeros(1, 4)];
+                end
             case 8 % all diffs locked
                 subMl = [zeros(1, 5), 1, -1, 0, 0, 0, zeros(1, 4); ...
                     zeros(1, 10), 0, 0, 1, -1; ...
                     zeros(1, 10), 1, -1, 0, 0; ...
                     zeros(1, 10), -1, -1, bap, bap]; % brake forces should respect static balancement.
+                if any(lock_status(1:2))
+                    subMl(3,:) = [zeros(1, 5), 0, 1, -1, 0, 0, zeros(1, 4)];
+                end
+                if any(lock_status(3:4))
+                    subMl(2,:) = [zeros(1, 5), 0, 0, 0, 1, -1, zeros(1, 4)];
+                end
             case 9 % all diffs open
                 subMl = [zeros(1, 5), 1, -.25, -.25, -.25, -.25, zeros(1, 4); ...
                     0, 1, -1, 0, 0, zeros(1, 9); ...
@@ -319,16 +347,28 @@ Mdp = M_v(3) + M_v(4);
                     0, 1, -1, 0, 0, zeros(1, 9); ...
                     zeros(1, 10), 0, 0, 1, -1; ...
                     ka, -1, -1, 0, 0, zeros(1, 9)]; 
+                if any(lock_status(3:4))
+                    subMl(3,:) = [zeros(1, 5), 0, 0, 0, 1, -1, zeros(1, 4)];
+                end
             case 11 % C open, A locked, P open
                 subMl = [zeros(1, 5), 1, -.5, 0, -.25, -.25, zeros(1, 4); ...
                     0, 0, 0, 1, -1, zeros(1, 9); ...
                     zeros(1, 10), 1, -1, 0, 0; ...
                     ka, -1, -1, 0, 0, zeros(1, 9)]; 
+                if any(lock_status(1:2))
+                    subMl(3,:) = [zeros(1, 5), 0, 1, -1, 0, 0, zeros(1, 4)];
+                end
             case 12 % C open, A and P locked
                 subMl = [zeros(1, 5), 1, -.5, 0, -.5, 0, zeros(1, 4); ...
                     zeros(1, 10), 0, 0, 1, -1; ...
                     zeros(1, 10), 1, -1, 0, 0; ...
                     ka, -1, -1, 0, 0, zeros(1, 9)]; 
+                if any(lock_status(1:2))
+                    subMl(3,:) = [zeros(1, 5), 0, 1, -1, 0, 0, zeros(1, 4)];
+                end
+                if any(lock_status(3:4))
+                    subMl(2,:) = [zeros(1, 5), 0, 0, 0, 1, -1, zeros(1, 4)];
+                end
         end
     end
 
