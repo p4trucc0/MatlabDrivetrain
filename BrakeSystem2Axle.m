@@ -19,7 +19,7 @@ classdef BrakeSystem2Axle < handle
         function [Mf, Mr] = get_brake_torques(obj)
             brk_x = obj.controls.brk_pedal;
             brk_f = brk_x;
-            brk_r = interp1(obj.distribution.x, obj.distribution.y_rf, brk_x);
+            brk_r = interp1(obj.distribution.x, obj.distribution.y_rf, brk_x)*brk_f;
             if brk_r > brk_f
                 brk_f = (brk_f / brk_r) * brk_x;
                 brk_r = brk_x;
