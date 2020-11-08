@@ -186,7 +186,7 @@ f1 = fopen(OutputFileName, 'a');
         SimTime = 0.0;
         LastGearChange = 0.0;
         IntermediateSteps = round(DrawDeltaTime / SimulationDeltaTime); % how many intermediate simulation steps.
-        gear_p = 1;
+        gear_p = 0;
         LastDrawTime2 = now;
         while exitCondition == 0
             b = j.button;

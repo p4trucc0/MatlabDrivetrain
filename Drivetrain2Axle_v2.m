@@ -40,11 +40,20 @@ classdef Drivetrain2Axle_v2 < handle
             th1_f = w0v(3); % speed of front wheel
             th1_r = w0v(4); % speed of rear wheel
             c_gear = obj.controls.gear_lever;
-            t_gbox = obj.gearbox.get_ratio(c_gear);
-            t_diff = obj.differential.final_drive;
-            t = t_gbox * t_diff;
-            obj.clutch.update_coupled_state(obj.controls.clc_pedal, th1_m, th1_c);
-            clutch_is_engaged = obj.clutch.is_coupled;
+            if c_gear == 0 % Neutral
+                t = 50.0; % Random value, really
+                clutch_is_engaged = false;
+            else
+                if c_gear == -1
+                    t_gbox = obj.gearbox.get_ratio(0);
+                else
+                    t_gbox = obj.gearbox.get_ratio(c_gear);
+                end
+                t_diff = obj.differential.final_drive;
+                t = t_gbox * t_diff;
+                obj.clutch.update_coupled_state(obj.controls.clc_pedal, th1_m, th1_c);
+                clutch_is_engaged = obj.clutch.is_coupled;
+            end
             if clutch_is_engaged % compute reduced Jc and rc.
                 Jc_a = obj.clutch.J + obj.engine.Jm;
                 rc_a = obj.clutch.r + obj.engine.fv_0;
@@ -52,7 +61,11 @@ classdef Drivetrain2Axle_v2 < handle
             else % separately handle engine and clutch case
                 %clutch_factor = obj.clutch.get_engaged_factor(obj.controls.clc_pedal);
                 %Mc_a = -obj.clutch.kf*clutch_factor*sign(th1_m - th1_c);
-                Mc_a = obj.clutch.get_torque(th1_m, th1_c, obj.controls.clc_pedal);
+                if c_gear == 0 % neutral
+                    Mc_a = 0;
+                else
+                    Mc_a = obj.clutch.get_torque(th1_m, th1_c, obj.controls.clc_pedal);
+                end
                 th2_m = (obj.engine.get_torque(obj.controls.gas_pedal, rads2rpm(th1_m)) +Mc_a - obj.engine.fv_0*th1_m) / obj.engine.Jm;
                 rc_a = obj.clutch.r;
                 Jc_a = obj.clutch.J;
