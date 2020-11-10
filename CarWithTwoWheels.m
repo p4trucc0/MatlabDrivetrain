@@ -56,8 +56,10 @@ classdef CarWithTwoWheels < handle
             Fz_a = (Fz - Fz_p);
             k_a = obj.eval_slip(th1_a, obj.drivetrain.wheel_front.R, x1_b);
             k_p = obj.eval_slip(th1_p, obj.drivetrain.wheel_rear.R, x1_b);
-            [Fx_a, ~, ~] = pacejka96(obj.wheel_front.pacejka, Fz_a/1000, 0.0, k_a, 0.0);
-            [Fx_p, ~, ~] = pacejka96(obj.wheel_rear.pacejka, Fz_p/1000, 0.0, k_p, 0.0);
+            [Fx_a, ~, ~] = pacejka96(obj.wheel_front.pacejka, Fz_a/2000, 0.0, k_a, 0.0);
+            [Fx_p, ~, ~] = pacejka96(obj.wheel_rear.pacejka, Fz_p/2000, 0.0, k_p, 0.0);
+            Fx_a = 2*Fx_a;
+            Fx_p = 2*Fx_p; % pacejka describes ONE of the two wheels!
             Fx_aer = .5*1.2*obj.front_surface*obj.drag_coeff*(x1_b^2);
             w4dt = x1v(1:4);
             [x2_dt, ap] = obj.drivetrain.get_shaft_acc(w4dt, Fx_a, Fx_p);
