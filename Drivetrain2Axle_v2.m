@@ -88,7 +88,7 @@ classdef Drivetrain2Axle_v2 < handle
             end
             Mfv = [M_brk_max_front/2; M_brk_max_front/2; M_brk_max_rear/2; M_brk_max_rear/2];
             Fxv = [Fx_front/2; Fx_front/2; Fx_rear/2; Fx_rear/2];
-            Jrv = [obj.wheel_front.J/2; obj.wheel_front.J/2; obj.wheel_rear.J/2; obj.wheel_rear.J/2];
+            Jrv = [obj.wheel_front.J; obj.wheel_front.J; obj.wheel_rear.J; obj.wheel_rear.J];
             Rv = [obj.wheel_front.R; obj.wheel_front.R; obj.wheel_rear.R; obj.wheel_rear.R];
             [th2_v, th2d, M_v, Md, Mda, Mdp, add_param] = drivetrain_gen(obj.differential.type, ...
                 th1_v, th1_d, Mc_a, Mfv, Fxv, Jc_a, Jrv, rc_a, obj.differential.r, t, ...
