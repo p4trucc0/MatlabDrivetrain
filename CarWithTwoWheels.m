@@ -73,7 +73,7 @@ classdef CarWithTwoWheels < handle
         end
         
         function kk = eval_slip(obj, w, r, v)
-            if r < obj.min_speed_for_slip
+            if v < obj.min_speed_for_slip
                 kk = 100 * (w*r - v) /  obj.min_speed_for_slip;
             else
                 kk = 100 * (w*r - v) /  v;
