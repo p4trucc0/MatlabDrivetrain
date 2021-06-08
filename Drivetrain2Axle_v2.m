@@ -34,11 +34,29 @@ classdef Drivetrain2Axle_v2 < handle
         % Returns shaft accelerations given shaft speeds (all independent
         % rotating parts in the vehicle).
         % Engine - Driveshaft - Front axle - Rear axle
-        function [w1v, add_params] = get_shaft_acc(obj, w0v, Fx_front, Fx_rear)
+        function [w1v, add_params] = get_shaft_acc(obj, w0v, Fx_fl, Fx_rl, Fx_fr, Fx_rr)
+            if nargin < 5 % retro-compatibility
+                Fx_fl = Fx_fl / 2;
+                Fx_rl = Fx_rl / 2;
+                Fx_fr = Fx_fl;
+                Fx_rr = Fx_rl;
+                cut_output = true;
+            else
+                cut_output = false;
+            end
             th1_m = w0v(1); % engine speed
             th1_c = w0v(2); % clutch speed
-            th1_f = w0v(3); % speed of front wheel
-            th1_r = w0v(4); % speed of rear wheel
+            % Order of wheel speeds is defined like this to preserve
+            % retro-compatibility.
+            th1_fl = w0v(3); % speed of front left wheel
+            th1_rl = w0v(4); % speed of rear left wheel
+            if length(w0v) > 4
+                th1_fr = w0v(5); % FR
+                th1_rr = w0v(6); % RR
+            else
+                th1_fr = th1_fl;
+                th1_rr = th1_rl;
+            end
             c_gear = obj.controls.gear_lever;
             if c_gear == 0 % Neutral
                 t = 50.0; % Random value, really
@@ -71,23 +89,35 @@ classdef Drivetrain2Axle_v2 < handle
                 Jc_a = obj.clutch.J;
             end
             th1_d = th1_c / t;
-            th1_v = [th1_f; th1_f; th1_r; th1_r];
+            th1_v = [th1_fl; th1_fr; th1_rl; th1_rr];
             [M_brk_max_front_abs, M_brk_max_rear_abs] = obj.brake_system.get_brake_torques();
             chb = false;
-            if abs(th1_f) > obj.brake_speed_tol
-                M_brk_max_front = M_brk_max_front_abs * (sign(th1_f)); % new convention: positive when braking.
+            if abs(th1_fl) > obj.brake_speed_tol
+                M_brk_max_fl = M_brk_max_front_abs * (sign(th1_fl))/2; % new convention: positive when braking.
             else
-                M_brk_max_front = M_brk_max_front_abs;
+                M_brk_max_fl = M_brk_max_front_abs/2;
                 chb = true;
             end
-            if abs(th1_r) > obj.brake_speed_tol
-                M_brk_max_rear  = M_brk_max_rear_abs * (sign(th1_r));
+            if abs(th1_fr) > obj.brake_speed_tol
+                M_brk_max_fr = M_brk_max_front_abs * (sign(th1_fr))/2;
             else
-                M_brk_max_rear = M_brk_max_rear_abs;
+                M_brk_max_fr = M_brk_max_front_abs/2;
                 chb = true;
             end
-            Mfv = [M_brk_max_front/2; M_brk_max_front/2; M_brk_max_rear/2; M_brk_max_rear/2];
-            Fxv = [Fx_front/2; Fx_front/2; Fx_rear/2; Fx_rear/2];
+            if abs(th1_rl) > obj.brake_speed_tol
+                M_brk_max_rl  = M_brk_max_rear_abs * (sign(th1_rl))/2;
+            else
+                M_brk_max_rl = M_brk_max_rear_abs/2;
+                chb = true;
+            end
+            if abs(th1_rr) > obj.brake_speed_tol
+                M_brk_max_rr  = M_brk_max_rear_abs * (sign(th1_rr))/2;
+            else
+                M_brk_max_rr = M_brk_max_rear_abs/2;
+                chb = true;
+            end
+            Mfv = [M_brk_max_fl; M_brk_max_fr; M_brk_max_rl; M_brk_max_rr];
+            Fxv = [Fx_fl; Fx_fr; Fx_rl; Fx_rr];
             Jrv = [obj.wheel_front.J; obj.wheel_front.J; obj.wheel_rear.J; obj.wheel_rear.J];
             Rv = [obj.wheel_front.R; obj.wheel_front.R; obj.wheel_rear.R; obj.wheel_rear.R];
             [th2_v, th2d, M_v, Md, Mda, Mdp, add_param] = drivetrain_gen(obj.differential.type, ...
@@ -97,7 +127,10 @@ classdef Drivetrain2Axle_v2 < handle
             if clutch_is_engaged
                 th2_m = t*th2d;
             end % else already calculated
-            w1v = [th2_m; t*th2d; th2_v(1); th2_v(3)];
+            w1v = [th2_m; t*th2d; th2_v(1); th2_v(3); th2_v(2); th2_v(4)]; % same FL-RL-FR-RR for retrocomp.
+            if cut_output
+                w1v(5:6) = [];
+            end
             add_params = struct();
             add_params.M_v = M_v;
             add_params.Md = Md;
