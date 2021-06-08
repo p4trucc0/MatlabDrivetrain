@@ -1,6 +1,7 @@
 classdef Wheel < handle
     
     properties
+        m = 10.0;
         R = 0.3;
         J = 0.01;
         pacejka = [];
