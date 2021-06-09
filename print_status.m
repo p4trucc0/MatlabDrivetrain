@@ -1,0 +1,226 @@
+function print_status(fp, time, x0v, x1v, x2v, cs, dap, header)
+PRINTOUT_FORMAT_STR = '%s';
+PRINTOUT_FORMAT_NUM = '%f';
+PRINTOUT_FORMAT_SEP = ',';
+if (header)
+    fprintf(fp, PRINTOUT_FORMAT_STR, "t"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_m_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_c_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "xc_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "yc_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "zc_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "rho_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "beta_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "sigma_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_fl_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_fr_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_rl_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_rr_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_fl_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_fr_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_rl_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_rr_0"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % 17:21
+    fprintf(fp, PRINTOUT_FORMAT_STR, "phi_fl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "phi_fr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "phi_rl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "phi_rr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % 21:41
+    fprintf(fp, PRINTOUT_FORMAT_STR, "sa_fl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "sa_fr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "sa_rl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "sa_rr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "sr_fl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "sr_fr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "sr_rl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "sr_rr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fz_fl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fz_fr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fz_rl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fz_rr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fx_fl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fx_fr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fx_rl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fx_rr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fy_fl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fy_fr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fy_rl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Fy_rr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % 41:57 speeds.
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_m_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_c_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "xc_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "yc_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "zc_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "rho_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "beta_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "sigma_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_fl_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_fr_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_rl_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_rr_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_fl_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_fr_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_rl_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_rr_1"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % 57:73 accelerations.
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_m_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_c_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "xc_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "yc_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "zc_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "rho_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "beta_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "sigma_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_fl_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_fr_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_rl_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "l_rr_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_fl_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_fr_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_rl_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "th_rr_2"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % 73:76: As
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Ax"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Ay"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Az"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % 76:80: Braking torques
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Mf_fl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Mf_fr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Mf_rl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Mf_rr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % 80:84: Braking torques (theoretical)
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Mf_th_fl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Mf_th_fr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Mf_th_rl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Mf_th_rr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % 84:93: Active torques
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Ma_fl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Ma_fr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Ma_rl"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Ma_rr"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Md"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Mda"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Mdp"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Mc"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "Me"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % 93:100: Controls and steering
+    fprintf(fp, PRINTOUT_FORMAT_STR, "gas_pedal"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "brk_pedal"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "clc_pedal"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "clutch_engaged"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "gear_lever"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "steering_wheel"); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_STR, "steered_angle"); %fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, "\n");
+else
+    fprintf(fp, PRINTOUT_FORMAT_NUM, time); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(1)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(2)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(7)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(8)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(9)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(10)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(11)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(12)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(13)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(14)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(15)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(16)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(3)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(4)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(5)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x0v(6)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % Phi angles, legacy (for now) (group 1, 20) TODO: implement logging of these features.
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.delta); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.delta); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, 0.0); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, 0.0); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % Group 1 of additional parameters.
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.av(1)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.av(2)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.av(3)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.av(4)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.kv(1)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.kv(2)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.kv(3)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.kv(4)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fz(1)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fz(2)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fz(3)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fz(4)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fx(1)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fx(2)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fx(3)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fx(4)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fy(1)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fy(2)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fy(3)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Fy(4)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % Speeds
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(1)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(2)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(7)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(8)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(9)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(10)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(11)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(12)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(13)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(14)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(15)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(16)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(3)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(4)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(5)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x1v(6)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    % Accelerations
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(1)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(2)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(7)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(8)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(9)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(10)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(11)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(12)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(13)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(14)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(15)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(16)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(3)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(4)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(5)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, x2v(6)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    %% Accel relative to vehicle body
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Ax); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Ay); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Az); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    %% Braking torques (actual and theoretical)
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Mfv_eff(1)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Mfv_eff(2)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Mfv_eff(3)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Mfv_eff(4)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Mfv_th(1)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Mfv_th(2)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Mfv_th(3)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Mfv_th(4)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    %% Active torques.
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.M_v(1)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.M_v(2)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.M_v(3)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.M_v(4)); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Md); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Mda); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.Mdp); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.ClutchTorque); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.EngineTorque); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    %% Controls and steering input
+    fprintf(fp, PRINTOUT_FORMAT_NUM, cs.gas_pedal); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, cs.brk_pedal); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, cs.clc_pedal); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.ClutchEngaged); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, cs.gear_lever); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, cs.ste_wheel); fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, PRINTOUT_FORMAT_NUM, dap.delta); %fprintf(fp, PRINTOUT_FORMAT_SEP);
+    fprintf(fp, "\n");
+end

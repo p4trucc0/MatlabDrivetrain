@@ -137,6 +137,7 @@ classdef Drivetrain2Axle_v2 < handle
             add_params.Mda = Mda;
             add_params.Mdp = Mdp;
             add_params.Mb = add_param.Mfv;
+            add_params.Mfv_th = Mfv;
             add_params.w_diff = add_param.th1d;
             add_params.w_clutch = t*add_params.w_diff;
             add_params.ClutchTorque = -Mc_a;
@@ -144,6 +145,7 @@ classdef Drivetrain2Axle_v2 < handle
             add_params.WheelTorques = M_v;
             add_params.DiffTorque = Md;
             add_params.BrakeTorquesActual = add_param.Mfv;
+            add_params.Mfv_eff = add_params.BrakeTorquesActual;
             add_params.BrakeTorquesTheor = Mfv;
             add_params.ClutchEngaged = clutch_is_engaged;
         end

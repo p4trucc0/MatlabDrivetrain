@@ -400,6 +400,7 @@ classdef CarWithFourWheels < handle
             %par_out.phiv = [phi_fl, phi_fr, phi_rl, phi_rr];
             par_out.A_car = A_car;
             par_out.Ax = A_car(1); par_out.Ay = A_car(2); par_out.Az = A_car(3);
+            par_out.delta = phi_fl; % approximation!
             %par_out.q_2 = q_2;
             %par_out.q_1 = q_1;
             %par_out.q_0 = q_0;
@@ -416,7 +417,7 @@ classdef CarWithFourWheels < handle
             %par_out.F_aer_x = Fd_x;
             %par_out.F_aer_y = Fd_y;
             par_out.kv = [slip_rate_fl, slip_rate_fr, slip_rate_rl, slip_rate_rr];
-            par_out.sa = [slip_angle_fl_deg, slip_angle_fr_deg, slip_angle_rl_deg, slip_angle_rr_deg];
+            par_out.av = [slip_angle_fl_deg, slip_angle_fr_deg, slip_angle_rl_deg, slip_angle_rr_deg];
             
             % Sad choice of FL-RL-FR-RR convention for
             % retrocompatibility...
