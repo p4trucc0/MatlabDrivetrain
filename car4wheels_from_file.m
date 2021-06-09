@@ -7,14 +7,15 @@ vp = veh_param_from_ascii(file_in);
 m = Engine(vp.engine_lambda_v, vp.engine_rpm_v, vp.engine_torque_map, vp.engine_fv_0, vp.engine_fv_1, vp.engine_Jm);
 f = Clutch(vp.clutch_kf, vp.clutch_J, vp.clutch_r, vp.clutch_ef_thr, vp.clutch_sp_thr);
 c = Gearbox(vp.gearbox_ratios, vp.gearbox_efficiencies, vp.gearbox_has_reverse);
-d = Differential2Axle_v2(vp.differential_final_drive, vp.differential_td_a, vp.differential_r, vp.differential_diff_type);
+d = Differential2Axle_v2(vp.differential_final_drive, [vp.differential_td_a, ...
+    1-vp.differential_td_a], vp.differential_diff_type, vp.differential_r);
 b_f = Brake(vp.brakef_f, vp.brakef_R1, vp.brakef_R2, vp.brakef_alpha, vp.brakef_max_Q);
 b_r = Brake(vp.braker_f, vp.braker_R1, vp.braker_R2, vp.braker_alpha, vp.braker_max_Q);
 cnt = Controls();
 
 nbd = struct();
 nbd.x = vp.brakedistr_x;
-nbd.y = vp.brakedistr_y;
+nbd.y_rf = vp.brakedistr_y;
 
 bs = BrakeSystem2Axle(b_f, b_r, cnt, nbd);
 

@@ -68,39 +68,43 @@ classdef CarWithFourWheels < handle
         % x2v_p: accelerations in previous time frame
         % x2v: accelerations
         % dap: additional parameters.
-        function [x2v, dap] = get_acc(obj, x0v, x1v, x2v_p)
+        function [x2v, par_out] = get_acc(obj, x0v, x1v, x2v_p)
             % Copy kinetic quantities
-            xc_1 = x1v(1);
-            yc_1 = x1v(2);
-            zc_1 = x1v(3);
-            rho_1 = x1v(4);
-            beta_1 = x1v(5);
-            sigma_1 = x1v(6);
-            l_fl_1 = x1v(7);
-            l_fr_1 = x1v(8);
-            l_rl_1 = x1v(9);
-            l_rr_1 = x1v(10);
-            theta_fl_1 = x1v(11);
-            theta_fr_1 = x1v(12);
-            theta_rl_1 = x1v(13);
-            theta_rr_1 = x1v(14);
-            xc_0 = x0v(1);
-            yc_0 = x0v(2);
-            zc_0 = x0v(3);
-            rho_0 = x0v(4);
-            beta_0 = x0v(5);
-            sigma_0 = x0v(6);
-            l_fl_0 = x0v(7);
-            l_fr_0 = x0v(8);
-            l_rl_0 = x0v(9);
-            l_rr_0 = x0v(10);
-            theta_fl_0 = x0v(11);
-            theta_fr_0 = x0v(12);
-            theta_rl_0 = x0v(13);
-            theta_rr_0 = x0v(14);
+            xc_1 = x1v(7);
+            yc_1 = x1v(8);
+            zc_1 = x1v(9);
+            rho_1 = x1v(10);
+            beta_1 = x1v(11);
+            sigma_1 = x1v(12);
+            l_fl_1 = x1v(13);
+            l_fr_1 = x1v(14);
+            l_rl_1 = x1v(15);
+            l_rr_1 = x1v(16);
+            theta_fl_1 = x1v(3);
+            theta_fr_1 = x1v(4);
+            theta_rl_1 = x1v(5);
+            theta_rr_1 = x1v(6);
+            theta_m_1 = x1v(1); % engine speed
+            theta_c_1 = x1v(2); % clutch speed
+            xc_0 = x0v(7);
+            yc_0 = x0v(8);
+            zc_0 = x0v(9);
+            rho_0 = x0v(10);
+            beta_0 = x0v(11);
+            sigma_0 = x0v(12);
+            l_fl_0 = x0v(13);
+            l_fr_0 = x0v(14);
+            l_rl_0 = x0v(15);
+            l_rr_0 = x0v(16);
+            theta_fl_0 = x0v(3);
+            theta_fr_0 = x0v(4);
+            theta_rl_0 = x0v(5);
+            theta_rr_0 = x0v(6);
+            theta_m_0 = x0v(1); % engine pos
+            theta_c_0 = x0v(2); % clutch pos
             
-            q_0 = x0v;
-            q_1 = x1v;
+            q_0 = x0v(1:10);
+            q_1 = x1v(1:10);
             
             % Terrain speed (unused)
             zpn_fl_0 = 0;
@@ -113,8 +117,8 @@ classdef CarWithFourWheels < handle
             zpn_rr_1 = 0;
             
             % Steering (TODO: Improve this... don't you know Ackerman?)
-            phi_fl = ste_wheel*obj.steering_sensitivity;
-            phi_fr = ste_wheel*obj.steering_sensitivity;
+            phi_fl = obj.controls.ste_wheel*obj.steering_sensitivity;
+            phi_fr = obj.controls.ste_wheel*obj.steering_sensitivity;
             phi_rl = 0;
             phi_rr = 0;
             
@@ -339,7 +343,7 @@ classdef CarWithFourWheels < handle
             
             %% Drivetrain does his thing.
             % FL-RL-FR-RR convention (retro-compatibility).
-            w0v = [theta_fl_1; theta_rl_1; theta_fr_1; theta_rr_1];
+            w0v = [theta_m_1; theta_c_1; theta_fl_1; theta_rl_1; theta_fr_1; theta_rr_1];
             [w1v, dap] = obj.drivetrain.get_shaft_acc(w0v, Fx_t_fl, Fx_t_rl, Fx_t_fr, Fx_t_rr);
             
             % Re.bring forces in the vehicle's frame.
@@ -414,11 +418,12 @@ classdef CarWithFourWheels < handle
             par_out.kv = [slip_rate_fl, slip_rate_fr, slip_rate_rl, slip_rate_rr];
             par_out.sa = [slip_angle_fl_deg, slip_angle_fr_deg, slip_angle_rl_deg, slip_angle_rr_deg];
             
-            
-            theta_2_v = [w1v(1); w1v(3); w1v(2); w1v(4)];
+            % Sad choice of FL-RL-FR-RR convention for
+            % retrocompatibility...
+            theta_2_v = [w1v(1); w1v(2); w1v(3); w1v(5); w1v(4); w1v(6)];
             
             %xd = [q_2; theta_2_v; y(1:14)];
-            x2v = [q_2; theta_2_v];
+            x2v = [theta_2_v; q_2];
             %% UNTESTED!
         end
         
