@@ -11,7 +11,7 @@ classdef Clutch < handle
     
     methods
         
-        function obj = Clutch(n_kf, n_J, n_r)
+        function obj = Clutch(n_kf, n_J, n_r, n_ef_thr, n_sp_thr)
             if nargin < 1
                 obj.kf = .1;
             else
@@ -19,6 +19,10 @@ classdef Clutch < handle
                 if nargin > 1
                     obj.J = n_J;
                     obj.r = n_r;
+                    if nargin > 3
+                        obj.ef_thr = n_ef_thr;
+                        obj.sp_thr = n_sp_thr;
+                    end
                 else
                     obj.J = 0.1;
                     obj.r = 0.0;
