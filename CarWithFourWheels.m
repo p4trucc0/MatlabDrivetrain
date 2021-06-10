@@ -103,8 +103,10 @@ classdef CarWithFourWheels < handle
             theta_m_0 = x0v(1); % engine pos
             theta_c_0 = x0v(2); % clutch pos
             
-            q_0 = x0v(1:10);
-            q_1 = x1v(1:10);
+            q_0 = x0v(7:16);
+            q_1 = x1v(7:16);
+            %q_0 = [xc_0; yc_0; zc_0; rho_0; beta_0; sigma_0; l_fl_0; l_fr_0; l_rl_0; l_rr_0];
+            %q_1 = [xc_1; yc_1; zc_1; rho_1; beta_1; sigma_1; l_fl_1; l_fr_1; l_rl_1; l_rr_1];
             
             % Terrain speed (unused)
             zpn_fl_0 = 0;
