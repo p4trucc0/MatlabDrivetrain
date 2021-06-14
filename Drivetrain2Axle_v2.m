@@ -124,6 +124,7 @@ classdef Drivetrain2Axle_v2 < handle
                 th1_v, th1_d, Mc_a, Mfv, Fxv, Jc_a, Jrv, rc_a, obj.differential.r, t, ...
                 obj.differential.torque_distribution(1), obj.differential.torque_distribution(2), ...
                 Rv, chb);
+            % th2d = -th2d; % quick attempt to fix incoherences
             if clutch_is_engaged
                 th2_m = t*th2d;
             end % else already calculated
