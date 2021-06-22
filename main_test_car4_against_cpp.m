@@ -7,7 +7,7 @@ clc
 
 c = car4wheels_from_file('testarossa.txt');
 
-InputFile = 'out_tr_01.txt';
+InputFile = 'out_tr_02.txt';
 OutputFile = ['MLout_tr_', datestr(now, 'yyyy_mm_dd_HH_MM_SS'), '.txt'];
 xv_0 = [0; 0; 0; 0; 0; 0; 0; 0; 0.2; 0; 0; 0; 0.75; 0.75; 0.75; 0.75];
 xv_1 = zeros(16, 1);
@@ -78,6 +78,24 @@ legend('C++', 'Matlab');
 xlim([0.0, MAX_TIME]);
 
 figure;
+plot(hist.t, hist.sigma_0, 'r-');
+grid on; hold on;
+plot(h_out.t, h_out.sigma_0, 'b-');
+title('Yaw Angle');
+xlabel('Time');
+legend('C++', 'Matlab');
+xlim([0.0, MAX_TIME]);
+
+figure;
+plot(hist.t, hist.sigma_1, 'r-');
+grid on; hold on;
+plot(h_out.t, h_out.sigma_1, 'b-');
+title('Yaw Speed');
+xlabel('Time');
+legend('C++', 'Matlab');
+xlim([0.0, MAX_TIME]);
+
+figure;
 plot(hist.t, hist.zc_0, 'r-');
 grid on; hold on;
 plot(h_out.t, h_out.zc_0, 'b-');
@@ -109,6 +127,18 @@ legend('C++ (E)', 'C++ (C)', 'Matlab (E)', 'Matlab (C)');
 xlim([0.0, MAX_TIME]);
 
 
+hist.speed = (hist.xc_1.^2 + hist.yc_1.^2).^.5;
+h_out.speed = (h_out.xc_1.^2 + h_out.yc_1.^2).^.5;
+
+figure;
+plot(hist.t, hist.speed, 'r-');
+grid on; hold on;
+plot(h_out.t, h_out.speed, 'b-');
+title('Speed');
+xlabel('Time');
+legend('C++', 'Matlab');
+xlim([0.0, MAX_TIME]);
+
 % figure;
 % grid on; hold on;
 % title('Clutch Speed');
@@ -116,13 +146,82 @@ xlim([0.0, MAX_TIME]);
 % legend('C++', 'Matlab');
 % xlim([0.0, MAX_TIME]);
 
+
 figure;
 plot(hist.t, hist.th_fl_1, 'r-');
 grid on; hold on;
 plot(h_out.t, h_out.th_fl_1, 'b-');
-title('Front Left wheel Speed');
+plot(hist.t, hist.th_fr_1, 'c-');
+plot(h_out.t, h_out.th_fr_1, 'm-');
+title('Front wheels Speed');
 xlabel('Time');
-legend('C++', 'Matlab');
+legend('C++ FL', 'Matlab FL', 'C++ FR', 'Matlab FR');
+xlim([0.0, MAX_TIME]);
+
+figure;
+plot(hist.t, hist.th_fl_1./hist.speed, 'r-');
+grid on; hold on;
+plot(h_out.t, h_out.th_fl_1./h_out.speed, 'b-');
+plot(hist.t, hist.th_fr_1./hist.speed, 'c-');
+plot(h_out.t, h_out.th_fr_1./h_out.speed, 'm-');
+title('Front wheels Speed divided by Vehicle Speed');
+xlabel('Time');
+legend('C++ FL', 'Matlab FL', 'C++ FR', 'Matlab FR');
+xlim([0.0, MAX_TIME]);
+
+figure;
+plot(hist.t, hist.sa_fl, 'r-');
+grid on; hold on;
+plot(h_out.t, h_out.sa_fl, 'b-');
+plot(hist.t, hist.sa_fr, 'c-');
+plot(h_out.t, h_out.sa_fr, 'm-');
+title('Front Slip Angles');
+xlabel('Time');
+legend('C++ FL', 'Matlab FL', 'C++ FR', 'Matlab FR');
+xlim([0.0, MAX_TIME]);
+
+figure;
+plot(hist.t, hist.sa_rl, 'r-');
+grid on; hold on;
+plot(h_out.t, h_out.sa_rl, 'b-');
+plot(hist.t, hist.sa_rr, 'c-');
+plot(h_out.t, h_out.sa_rr, 'm-');
+title('Rear Slip Angles');
+xlabel('Time');
+legend('C++ RL', 'Matlab RL', 'C++ RR', 'Matlab RR');
+xlim([0.0, MAX_TIME]);
+
+figure;
+plot(hist.t, hist.sr_fl, 'r-');
+grid on; hold on;
+plot(h_out.t, h_out.sr_fl, 'b-');
+plot(hist.t, hist.sr_fr, 'c-');
+plot(h_out.t, h_out.sr_fr, 'm-');
+title('Front Slip Rates');
+xlabel('Time');
+legend('C++ FL', 'Matlab FL', 'C++ FR', 'Matlab FR');
+xlim([0.0, MAX_TIME]);
+
+figure;
+plot(hist.t, hist.sr_rl, 'r-');
+grid on; hold on;
+plot(h_out.t, h_out.sr_rl, 'b-');
+plot(hist.t, hist.sr_rr, 'c-');
+plot(h_out.t, h_out.sr_rr, 'm-');
+title('Rear Slip Rates');
+xlabel('Time');
+legend('C++ RL', 'Matlab RL', 'C++ RR', 'Matlab RR');
+xlim([0.0, MAX_TIME]);
+
+figure;
+plot(hist.t, hist.th_rl_1, 'r-');
+grid on; hold on;
+plot(h_out.t, h_out.th_rl_1, 'b-');
+plot(hist.t, hist.th_rr_1, 'c-');
+plot(h_out.t, h_out.th_rr_1, 'm-');
+title('Rear wheels Speed');
+xlabel('Time');
+legend('C++ RL', 'Matlab RL', 'C++ RR', 'Matlab RR');
 xlim([0.0, MAX_TIME]);
 
 figure;
