@@ -6,14 +6,12 @@ clc
 % Test results when integrating a CarWithFourWheels object.
 
 c = car4wheels_from_file('testarossa.txt');
+N_Step = 10;
 
 InputFile = 'out_tr_02.txt';
 OutputFile = ['MLout_tr_', datestr(now, 'yyyy_mm_dd_HH_MM_SS'), '.txt'];
 hist = table2struct(readtable(InputFile), 'ToScalar', 1);
-% xv_0 = [0; 0; 0; 0; 0; 0; 0; 0; 0.2; 0; 0; 0; 0.75; 0.75; 0.75; 0.75];
-% xv_1 = zeros(16, 1);
-% xv_1(1) = rpm2rads(2000.0);
-% xv_2 = zeros(16, 1);
+
 xv_0 = [hist.th_m_0(1); hist.th_c_0(1); hist.th_fl_0(1); ...
     hist.th_fr_0(1); hist.th_rl_0(1); hist.th_rr_0(1); ...
     hist.xc_0(1); hist.yc_0(1); hist.zc_0(1); ...
@@ -30,24 +28,41 @@ xv_2 = [hist.th_m_2(1); hist.th_c_2(1); hist.th_fl_2(1); ...
     hist.rho_2(1); hist.beta_2(1); hist.sigma_2(1); ...
     hist.l_fl_2(1); hist.l_fr_2(1); hist.l_rl_2(1); hist.l_rr_2(1)];
 
+%xv_0 = [0.0; 0; 0; 0; 0; 0; 0; 0; 0.2; 0; 0; 0; 0.75; 0.75; 0.75; 0.75];
+%xv_1 = zeros(16, 1);
+%xv_1(1) = rpm2rads(2000.0);
+%xv_1(2) = 50.42; %xv_1(1); % / (c.drivetrain.differential.final_drive * c.drivetrain.gearbox.ratios(2));
+%xv_2 = zeros(16, 1);
 
-MAX_TIME = 2.0;
+MAX_TIME = 20.0;
 dt_sim = (1/240.0);
 
 dt_log = median(diff(hist.t));
 ns_sim = round(dt_log / dt_sim); % Number of steps to average.
 
+% c.controls.set_all(0.0, 0.0, 0.0, ...
+%    0, 0.0);
 c.controls.set_all(hist.gas_pedal(1), hist.brk_pedal(1), hist.clc_pedal(1), ...
     hist.gear_lever(1), hist.steering_wheel(1));
+for ii = 1:N_Step
+        [xv_2, dap] = c.get_acc(xv_0, xv_1, xv_2);
+        %% TODO: Verify SINGLE INT STEP
+        xv_0 = update_drivetrain_kinematics_cgs(xv_0, xv_1, dt_sim, false, false);
+        xv_1 = update_drivetrain_kinematics_cgs(xv_1, xv_2, dt_sim, true, false);
+end
 
-t = hist.t(1);
+
+
+% [xv_2, dap] = c.get_acc(xv_0, xv_1, xv_2);
+
+return
+t = 0.0;
 
 f = fopen(OutputFile, 'a');
 print_status(f, t, [], [], [], c.controls, [], 1);
 fclose(f);
 i_log = 1;
 while t < MAX_TIME
-    i_log = i_log + 1;
     xv0h = zeros(16, ns_sim);
     xv1h = zeros(16, ns_sim);
     xv2h = zeros(16, ns_sim);
@@ -61,13 +76,14 @@ while t < MAX_TIME
         xv2h(:, i_s) = xv_2;
         dap_all = [dap_all; dap];
     end
+    i_log = i_log + 1;
     c.controls.set_all(hist.gas_pedal(i_log), hist.brk_pedal(i_log), hist.clc_pedal(i_log), ...
         hist.gear_lever(i_log), hist.steering_wheel(i_log));
     xv0a = mean(xv0h, 2);
     xv1a = mean(xv1h, 2);
     xv2a = mean(xv2h, 2);
     dapa = average_struct_set(dap_all);
-    t = hist.t(i_log); %t + dt_log;
+    t = t + dt_log;
     f = fopen(OutputFile, 'a');
     print_status(f, t, xv0a, xv1a, xv2a, c.controls, dapa, 0);
     fclose(f);
@@ -89,24 +105,6 @@ plot(hist.t, hist.yc_0, 'r-');
 grid on; hold on;
 plot(h_out.t, h_out.yc_0, 'b-');
 title('YC0');
-xlabel('Time');
-legend('C++', 'Matlab');
-xlim([0.0, MAX_TIME]);
-
-figure;
-plot(hist.t, hist.sigma_0, 'r-');
-grid on; hold on;
-plot(h_out.t, h_out.sigma_0, 'b-');
-title('Yaw Angle');
-xlabel('Time');
-legend('C++', 'Matlab');
-xlim([0.0, MAX_TIME]);
-
-figure;
-plot(hist.t, hist.sigma_1, 'r-');
-grid on; hold on;
-plot(h_out.t, h_out.sigma_1, 'b-');
-title('Yaw Speed');
 xlabel('Time');
 legend('C++', 'Matlab');
 xlim([0.0, MAX_TIME]);
@@ -143,18 +141,6 @@ legend('C++ (E)', 'C++ (C)', 'Matlab (E)', 'Matlab (C)');
 xlim([0.0, MAX_TIME]);
 
 
-hist.speed = (hist.xc_1.^2 + hist.yc_1.^2).^.5;
-h_out.speed = (h_out.xc_1.^2 + h_out.yc_1.^2).^.5;
-
-figure;
-plot(hist.t, hist.speed, 'r-');
-grid on; hold on;
-plot(h_out.t, h_out.speed, 'b-');
-title('Speed');
-xlabel('Time');
-legend('C++', 'Matlab');
-xlim([0.0, MAX_TIME]);
-
 % figure;
 % grid on; hold on;
 % title('Clutch Speed');
@@ -162,82 +148,13 @@ xlim([0.0, MAX_TIME]);
 % legend('C++', 'Matlab');
 % xlim([0.0, MAX_TIME]);
 
-
 figure;
 plot(hist.t, hist.th_fl_1, 'r-');
 grid on; hold on;
 plot(h_out.t, h_out.th_fl_1, 'b-');
-plot(hist.t, hist.th_fr_1, 'c-');
-plot(h_out.t, h_out.th_fr_1, 'm-');
-title('Front wheels Speed');
+title('Front Left wheel Speed');
 xlabel('Time');
-legend('C++ FL', 'Matlab FL', 'C++ FR', 'Matlab FR');
-xlim([0.0, MAX_TIME]);
-
-figure;
-plot(hist.t, hist.th_fl_1./hist.speed, 'r-');
-grid on; hold on;
-plot(h_out.t, h_out.th_fl_1./h_out.speed, 'b-');
-plot(hist.t, hist.th_fr_1./hist.speed, 'c-');
-plot(h_out.t, h_out.th_fr_1./h_out.speed, 'm-');
-title('Front wheels Speed divided by Vehicle Speed');
-xlabel('Time');
-legend('C++ FL', 'Matlab FL', 'C++ FR', 'Matlab FR');
-xlim([0.0, MAX_TIME]);
-
-figure;
-plot(hist.t, hist.sa_fl, 'r-');
-grid on; hold on;
-plot(h_out.t, h_out.sa_fl, 'b-');
-plot(hist.t, hist.sa_fr, 'c-');
-plot(h_out.t, h_out.sa_fr, 'm-');
-title('Front Slip Angles');
-xlabel('Time');
-legend('C++ FL', 'Matlab FL', 'C++ FR', 'Matlab FR');
-xlim([0.0, MAX_TIME]);
-
-figure;
-plot(hist.t, hist.sa_rl, 'r-');
-grid on; hold on;
-plot(h_out.t, h_out.sa_rl, 'b-');
-plot(hist.t, hist.sa_rr, 'c-');
-plot(h_out.t, h_out.sa_rr, 'm-');
-title('Rear Slip Angles');
-xlabel('Time');
-legend('C++ RL', 'Matlab RL', 'C++ RR', 'Matlab RR');
-xlim([0.0, MAX_TIME]);
-
-figure;
-plot(hist.t, hist.sr_fl, 'r-');
-grid on; hold on;
-plot(h_out.t, h_out.sr_fl, 'b-');
-plot(hist.t, hist.sr_fr, 'c-');
-plot(h_out.t, h_out.sr_fr, 'm-');
-title('Front Slip Rates');
-xlabel('Time');
-legend('C++ FL', 'Matlab FL', 'C++ FR', 'Matlab FR');
-xlim([0.0, MAX_TIME]);
-
-figure;
-plot(hist.t, hist.sr_rl, 'r-');
-grid on; hold on;
-plot(h_out.t, h_out.sr_rl, 'b-');
-plot(hist.t, hist.sr_rr, 'c-');
-plot(h_out.t, h_out.sr_rr, 'm-');
-title('Rear Slip Rates');
-xlabel('Time');
-legend('C++ RL', 'Matlab RL', 'C++ RR', 'Matlab RR');
-xlim([0.0, MAX_TIME]);
-
-figure;
-plot(hist.t, hist.th_rl_1, 'r-');
-grid on; hold on;
-plot(h_out.t, h_out.th_rl_1, 'b-');
-plot(hist.t, hist.th_rr_1, 'c-');
-plot(h_out.t, h_out.th_rr_1, 'm-');
-title('Rear wheels Speed');
-xlabel('Time');
-legend('C++ RL', 'Matlab RL', 'C++ RR', 'Matlab RR');
+legend('C++', 'Matlab');
 xlim([0.0, MAX_TIME]);
 
 figure;
