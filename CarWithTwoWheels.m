@@ -70,6 +70,8 @@ classdef CarWithTwoWheels < handle
             params.Fx_p = Fx_p;
             params.Fz_a = Fz_a;
             params.Fz_p = Fz_p;
+            params.Fx = [Fx_a, Fx_a, Fx_p, Fx_p];
+            params.Fz = [Fz_a, Fz_a, Fz_p, Fz_p];
         end
         
         function kk = eval_slip(obj, w, r, v)

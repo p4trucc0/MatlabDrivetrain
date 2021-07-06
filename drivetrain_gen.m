@@ -33,7 +33,7 @@ function [th2_v, th2d, M_v, Md, Mda, Mdp, add_param] = drivetrain_gen(diff_setup
 % add_param: additional parameters
 
 
-CHECK_DIFF_SPEED = true; % Manually correct input diff speed to account for integration quirks
+CHECK_DIFF_SPEED = false; %true; % Manually correct input diff speed to account for integration quirks
 
 % Input parsing
 diff_types = {'FWD free'; ... % 1
