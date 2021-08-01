@@ -33,7 +33,7 @@ function [th2_v, th2d, M_v, Md, Mda, Mdp, add_param] = drivetrain_gen(diff_setup
 % add_param: additional parameters
 
 
-CHECK_DIFF_SPEED = false; %true; % Manually correct input diff speed to account for integration quirks
+CHECK_DIFF_SPEED = true; % Manually correct input diff speed to account for integration quirks
 
 % Input parsing
 diff_types = {'FWD free'; ... % 1
@@ -214,23 +214,23 @@ if brake_check
     while keep_checking
         % Introduce known braking effect!
         if (~all(lock_status))
-        rows2excl = 2 + find(lock_status);
-        M_ba = [M_hi, smm; ...
-        zeros(4, 6), eye(4), zeros(4, 4); ...
-        get_lock_subm()];
-        M_ba_c = M_ba; % current
-        M_ba_c(4+rows2excl, :) = generate_lock_identities(lock_status); 
-        u_sf_hi_c = u_sf_hi;
-        u_sf_hi_c(rows2excl) = u_sf_hi_c(rows2excl) - Mfc(lock_status);
-        u_sf = [u_sf_hi_c; zeros(4, 1)];
-        x_sf = M \ u_sf;
-        U_ba_c = [zeros(6, 1); -x_sf(7:10);  zeros(4, 1)];
-        U_ba_c(4+rows2excl) = 0; %Mfc(lock_status);
-        %if abs(det(M_ba_c)) > tol_brk
-        xf_p = M_ba_c \ U_ba_c;
-        %end % else: take previous values as good. They should not change (intuition)...
-        Mfp_c = xf_p(11:14);
-        brk_trq_relation = abs(Mfp_c) <= abs(Mfc);
+            rows2excl = 2 + find(lock_status);
+            M_ba = [M_hi, smm; ...
+                zeros(4, 6), eye(4), zeros(4, 4); ...
+                get_lock_subm()];
+            M_ba_c = M_ba; % current
+            M_ba_c(4+rows2excl, :) = generate_lock_identities(lock_status);
+            u_sf_hi_c = u_sf_hi;
+            u_sf_hi_c(rows2excl) = u_sf_hi_c(rows2excl) - Mfc(lock_status);
+            u_sf = [u_sf_hi_c; zeros(4, 1)];
+            x_sf = M \ u_sf;
+            U_ba_c = [zeros(6, 1); -x_sf(7:10);  zeros(4, 1)];
+            U_ba_c(4+rows2excl) = 0; %Mfc(lock_status);
+            %if abs(det(M_ba_c)) > tol_brk
+            xf_p = M_ba_c \ U_ba_c;
+            %end % else: take previous values as good. They should not change (intuition)...
+            Mfp_c = xf_p(11:14);
+            brk_trq_relation = abs(Mfp_c) <= abs(Mfc);
         end
         if all(lock_status | brk_trq_relation) %(all(lock_status) || all(brk_trq_relation))
             keep_checking = false;

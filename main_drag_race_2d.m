@@ -8,7 +8,7 @@ clc
 %% Define simulation parameters
 finish_line = 400.0; % [m]
 limit_speed = Inf; % [km/h]
-t_limit = 6.0; % [s], time limit for the simulation
+t_limit = 60.0; % [s], time limit for the simulation
 dt = 1/240.0; % [s], simulation step
 rpm_initial = 2000.0;
 redline = 7000.0; % [rpm], when supposed to change gear.
@@ -70,6 +70,8 @@ while keep_sim
     if ((x1(5) > limit_speed) || (x0(5) > finish_line) || (t > t_limit))
         keep_sim = false;
     end
+    % Try using add_param clutch speed estimation to correct instability.
+    x1(2) = dap.w_clutch;
     xv0a = x5_to_x16(x0);
     xv1a = x5_to_x16(x1);
     xv2a = x5_to_x16(x2);

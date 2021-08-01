@@ -31,7 +31,7 @@ xv_2 = [hist.th_m_2(1); hist.th_c_2(1); hist.th_fl_2(1); ...
     hist.l_fl_2(1); hist.l_fr_2(1); hist.l_rl_2(1); hist.l_rr_2(1)];
 
 
-MAX_TIME = 2.0;
+MAX_TIME = 20.0;
 dt_sim = (1/240.0);
 
 dt_log = median(diff(hist.t));
@@ -55,7 +55,7 @@ while t < MAX_TIME
     for i_s = 1:ns_sim
         [xv_2, dap] = c.get_acc(xv_0, xv_1, xv_2);
         xv_0 = update_drivetrain_kinematics_cgs(xv_0, xv_1, dt_sim, false, false);
-        xv_1 = update_drivetrain_kinematics_cgs(xv_1, xv_2, dt_sim, true, false);
+        xv_1 = update_drivetrain_kinematics_cgs(xv_1, xv_2, dt_sim, true, false, true, dap.w_clutch);
         xv0h(:, i_s) = xv_0;
         xv1h(:, i_s) = xv_1;
         xv2h(:, i_s) = xv_2;
@@ -74,6 +74,8 @@ while t < MAX_TIME
 end
 
 h_out = table2struct(readtable(OutputFile), 'ToScalar', 1);
+
+return;
 
 figure;
 plot(hist.t, hist.xc_0, 'r-');
